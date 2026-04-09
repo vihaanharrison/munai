@@ -175,7 +175,7 @@ const ChairPortal = () => {
                       <p className="text-xs text-muted-foreground">{d.country}</p>
                     </div>
                   </div>
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${d.active ? "bg-emerald-100 text-emerald-700" : "bg-secondary text-muted-foreground"}`}>
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${d.active ? "bg-accent/10 text-accent" : "bg-secondary text-muted-foreground"}`}>
                     {d.active ? "Active" : "Inactive"}
                   </span>
                 </div>
