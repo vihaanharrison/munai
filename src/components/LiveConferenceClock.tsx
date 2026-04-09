@@ -80,8 +80,8 @@ const LiveConferenceClock = ({ conferenceId }: Props) => {
       </div>
       <p className="font-mono text-2xl font-bold text-foreground text-center mb-3">{formatTime(now)}</p>
       {currentSession ? (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-center">
-          <p className="text-xs text-emerald-600 font-medium">NOW</p>
+        <div className="bg-accent/10 border border-accent/20 rounded-xl px-4 py-3 text-center">
+          <p className="text-xs text-accent font-medium">NOW</p>
           <p className="font-display font-semibold text-foreground">{currentSession.name}</p>
           <p className="text-xs text-muted-foreground">{currentSession.start_time} — {currentSession.end_time}</p>
         </div>
