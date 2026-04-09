@@ -14,16 +14,328 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chair_sessions: {
+        Row: {
+          active: boolean | null
+          committee_id: string
+          conference_id: string
+          created_at: string | null
+          device_id: string
+          display_name: string | null
+          id: string
+        }
+        Insert: {
+          active?: boolean | null
+          committee_id: string
+          conference_id: string
+          created_at?: string | null
+          device_id: string
+          display_name?: string | null
+          id?: string
+        }
+        Update: {
+          active?: boolean | null
+          committee_id?: string
+          conference_id?: string
+          created_at?: string | null
+          device_id?: string
+          display_name?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chair_sessions_committee_id_fkey"
+            columns: ["committee_id"]
+            isOneToOne: false
+            referencedRelation: "committees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chair_sessions_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "conferences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      committees: {
+        Row: {
+          chair_code: string | null
+          conference_id: string
+          created_at: string | null
+          id: string
+          name: string
+          topic: string | null
+        }
+        Insert: {
+          chair_code?: string | null
+          conference_id: string
+          created_at?: string | null
+          id?: string
+          name: string
+          topic?: string | null
+        }
+        Update: {
+          chair_code?: string | null
+          conference_id?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          topic?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "committees_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "conferences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conference_days: {
+        Row: {
+          conference_id: string
+          day_date: string
+          end_time: string
+          id: string
+          start_time: string
+        }
+        Insert: {
+          conference_id: string
+          day_date: string
+          end_time: string
+          id?: string
+          start_time: string
+        }
+        Update: {
+          conference_id?: string
+          day_date?: string
+          end_time?: string
+          id?: string
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conference_days_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "conferences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conferences: {
+        Row: {
+          banner_url: string | null
+          created_at: string | null
+          email: string | null
+          end_date: string
+          id: string
+          location: string | null
+          logo_url: string | null
+          name: string
+          payment_amount: string | null
+          payment_details: string | null
+          payment_link: string | null
+          public_code: string
+          secgen_code: string
+          secgen_user_id: string | null
+          secretariat_code: string
+          start_date: string
+          updated_at: string | null
+        }
+        Insert: {
+          banner_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          end_date: string
+          id?: string
+          location?: string | null
+          logo_url?: string | null
+          name: string
+          payment_amount?: string | null
+          payment_details?: string | null
+          payment_link?: string | null
+          public_code: string
+          secgen_code: string
+          secgen_user_id?: string | null
+          secretariat_code: string
+          start_date: string
+          updated_at?: string | null
+        }
+        Update: {
+          banner_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          end_date?: string
+          id?: string
+          location?: string | null
+          logo_url?: string | null
+          name?: string
+          payment_amount?: string | null
+          payment_details?: string | null
+          payment_link?: string | null
+          public_code?: string
+          secgen_code?: string
+          secgen_user_id?: string | null
+          secretariat_code?: string
+          start_date?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      delegates: {
+        Row: {
+          active: boolean | null
+          committee_id: string
+          conference_id: string
+          country: string
+          created_at: string | null
+          device_id: string | null
+          expires_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          active?: boolean | null
+          committee_id: string
+          conference_id: string
+          country: string
+          created_at?: string | null
+          device_id?: string | null
+          expires_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          active?: boolean | null
+          committee_id?: string
+          conference_id?: string
+          country?: string
+          created_at?: string | null
+          device_id?: string | null
+          expires_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delegates_committee_id_fkey"
+            columns: ["committee_id"]
+            isOneToOne: false
+            referencedRelation: "committees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delegates_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "conferences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedule_sessions: {
+        Row: {
+          conference_id: string
+          day_date: string
+          end_time: string
+          id: string
+          name: string
+          sort_order: number | null
+          start_time: string
+        }
+        Insert: {
+          conference_id: string
+          day_date: string
+          end_time: string
+          id?: string
+          name: string
+          sort_order?: number | null
+          start_time: string
+        }
+        Update: {
+          conference_id?: string
+          day_date?: string
+          end_time?: string
+          id?: string
+          name?: string
+          sort_order?: number | null
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_sessions_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "conferences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          approved: boolean | null
+          conference_id: string
+          created_at: string | null
+          display_name: string | null
+          id: string
+          permissions: Json | null
+          role: Database["public"]["Enums"]["app_role"]
+          role_title: string | null
+          user_id: string
+        }
+        Insert: {
+          approved?: boolean | null
+          conference_id: string
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          permissions?: Json | null
+          role: Database["public"]["Enums"]["app_role"]
+          role_title?: string | null
+          user_id: string
+        }
+        Update: {
+          approved?: boolean | null
+          conference_id?: string
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          permissions?: Json | null
+          role?: Database["public"]["Enums"]["app_role"]
+          role_title?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "conferences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_code: { Args: { length?: number }; Returns: string }
+      has_role: {
+        Args: {
+          _conference_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "secgen" | "secretariat" | "chair" | "delegate"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +462,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["secgen", "secretariat", "chair", "delegate"],
+    },
   },
 } as const
