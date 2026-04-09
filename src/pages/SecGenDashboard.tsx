@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Copy, Plus, Users, Settings, LogOut, Loader2 } from "lucide-react";
 import munLogo from "@/assets/mun-ai-logo.png";
+import ScheduleManager from "@/components/ScheduleManager";
+import AIAssistant from "@/components/AIAssistant";
 
 const SecGenDashboard = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,6 +34,17 @@ const SecGenDashboard = () => {
     setPendingMembers((membersRes.data as any) || []);
     setLoading(false);
   };
+
+  const conferenceDays = useMemo(() => {
+    if (!conference?.start_date || !conference?.end_date) return [];
+    const days: string[] = [];
+    const start = new Date(conference.start_date + "T00:00");
+    const end = new Date(conference.end_date + "T00:00");
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      days.push(d.toISOString().split("T")[0]);
+    }
+    return days;
+  }, [conference]);
 
   const copyCode = (code: string, label: string) => {
     navigator.clipboard.writeText(code);
@@ -73,7 +85,7 @@ const SecGenDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen gradient-hero flex items-center justify-center">
+      <div className="min-h-screen bg-[#efeeea] flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
@@ -81,19 +93,19 @@ const SecGenDashboard = () => {
 
   if (!conference) {
     return (
-      <div className="min-h-screen gradient-hero flex items-center justify-center">
+      <div className="min-h-screen bg-[#efeeea] flex items-center justify-center">
         <p className="text-muted-foreground">Conference not found</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen gradient-hero p-4">
-      <div className="max-w-3xl mx-auto pt-6 animate-fade-in">
+    <div className="min-h-screen bg-[#efeeea] p-4">
+      <div className="max-w-3xl mx-auto pt-6 animate-fade-in space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={munLogo} alt="MUN AI" className="w-10 h-10 object-contain" />
+            <img src={munLogo} alt="MUN AI" className="h-10 object-contain" />
             <div>
               <h1 className="font-display text-xl font-bold text-foreground">{conference.name}</h1>
               <p className="text-sm text-muted-foreground">Secretary General Dashboard</p>
@@ -105,7 +117,7 @@ const SecGenDashboard = () => {
         </div>
 
         {/* Codes */}
-        <div className="glass-card rounded-2xl p-5 mb-4 space-y-3">
+        <div className="glass-card rounded-2xl p-5 space-y-3">
           <h2 className="font-display font-semibold text-foreground flex items-center gap-2">
             <Settings className="w-4 h-4 text-accent" /> Conference Codes
           </h2>
@@ -127,7 +139,7 @@ const SecGenDashboard = () => {
         </div>
 
         {/* Committees */}
-        <div className="glass-card rounded-2xl p-5 mb-4">
+        <div className="glass-card rounded-2xl p-5">
           <h2 className="font-display font-semibold text-foreground flex items-center gap-2 mb-3">
             <Users className="w-4 h-4 text-accent" /> Committees
           </h2>
@@ -172,6 +184,14 @@ const SecGenDashboard = () => {
               ))}
           </div>
         )}
+
+        {/* Schedule Manager */}
+        {conferenceDays.length > 0 && (
+          <ScheduleManager conferenceId={id!} conferenceDays={conferenceDays} />
+        )}
+
+        {/* AI Assistant */}
+        <AIAssistant />
       </div>
     </div>
   );
