@@ -9,6 +9,7 @@ import CreateConference from "./pages/CreateConference";
 import JoinByCode from "./pages/JoinByCode";
 import ConferencePublic from "./pages/ConferencePublic";
 import SecGenDashboard from "./pages/SecGenDashboard";
+import SecretariatDashboard from "./pages/SecretariatDashboard";
 import ChairPortal from "./pages/ChairPortal";
 import DelegateRegister from "./pages/DelegateRegister";
 import NotFound from "./pages/NotFound";
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/join/:code" element={<JoinByCode />} />
           <Route path="/conference/:id" element={<ConferencePublic />} />
           <Route path="/secgen/:id" element={<SecGenDashboard />} />
+          <Route path="/secretariat/:id" element={<SecretariatDashboard />} />
           <Route path="/chair/:conferenceId/:committeeId" element={<ChairPortal />} />
           <Route path="/delegate/:conferenceId" element={<DelegateRegister />} />
           <Route path="*" element={<NotFound />} />

@@ -3,8 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Copy, Plus, Users, Settings, LogOut, Loader2 } from "lucide-react";
+import { Copy, Plus, Users, Settings, LogOut, Loader2, Trash2, Edit } from "lucide-react";
 import munLogo from "@/assets/mun-ai-logo.png";
 import ScheduleManager from "@/components/ScheduleManager";
 import AIAssistant from "@/components/AIAssistant";
@@ -17,10 +18,10 @@ const SecGenDashboard = () => {
   const [pendingMembers, setPendingMembers] = useState<any[]>([]);
   const [newCommittee, setNewCommittee] = useState("");
   const [loading, setLoading] = useState(true);
+  const [editingDelegations, setEditingDelegations] = useState<string | null>(null);
+  const [delegationsText, setDelegationsText] = useState("");
 
-  useEffect(() => {
-    loadData();
-  }, [id]);
+  useEffect(() => { loadData(); }, [id]);
 
   const loadData = async () => {
     if (!id) return;
@@ -58,18 +59,21 @@ const SecGenDashboard = () => {
     for (let i = 0; i < 8; i++) chairCode += chars[Math.floor(Math.random() * chars.length)];
 
     const { error } = await supabase.from("committees").insert({
-      conference_id: id,
-      name: newCommittee.trim(),
-      chair_code: chairCode,
+      conference_id: id, name: newCommittee.trim(), chair_code: chairCode,
     } as any);
 
-    if (error) {
-      toast.error(error.message);
-    } else {
+    if (error) { toast.error(error.message); } else {
       setNewCommittee("");
       loadData();
       toast.success("Committee added!");
     }
+  };
+
+  const saveDelegations = async (committeeId: string) => {
+    await supabase.from("committees").update({ delegations: delegationsText } as any).eq("id", committeeId);
+    setEditingDelegations(null);
+    loadData();
+    toast.success("Delegations saved!");
   };
 
   const approveMember = async (roleId: string) => {
@@ -84,19 +88,11 @@ const SecGenDashboard = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#efeeea] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-      </div>
-    );
+    return <div className="min-h-screen bg-[#efeeea] flex items-center justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>;
   }
 
   if (!conference) {
-    return (
-      <div className="min-h-screen bg-[#efeeea] flex items-center justify-center">
-        <p className="text-muted-foreground">Conference not found</p>
-      </div>
-    );
+    return <div className="min-h-screen bg-[#efeeea] flex items-center justify-center"><p className="text-muted-foreground">Conference not found</p></div>;
   }
 
   return (
@@ -111,9 +107,7 @@ const SecGenDashboard = () => {
               <p className="text-sm text-muted-foreground">Secretary General Dashboard</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={handleSignOut} className="rounded-xl">
-            <LogOut className="w-5 h-5" />
-          </Button>
+          <Button variant="ghost" size="icon" onClick={handleSignOut} className="rounded-xl"><LogOut className="w-5 h-5" /></Button>
         </div>
 
         {/* Codes */}
@@ -136,6 +130,11 @@ const SecGenDashboard = () => {
               </button>
             </div>
           ))}
+          <div className="bg-secondary/50 rounded-xl px-4 py-2.5">
+            <span className="text-xs text-muted-foreground">Delegate Registration Link</span>
+            <p className="font-mono text-xs text-foreground break-all">{window.location.origin}/delegate/{conference.id}</p>
+            <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/delegate/${conference.id}`); toast.success("Link copied!"); }} className="text-xs text-accent mt-1">Copy link</button>
+          </div>
         </div>
 
         {/* Committees */}
@@ -144,27 +143,42 @@ const SecGenDashboard = () => {
             <Users className="w-4 h-4 text-accent" /> Committees
           </h2>
           {committees.map((c: any) => (
-            <div key={c.id} className="flex items-center justify-between bg-secondary/50 rounded-xl px-4 py-2.5 mb-2">
-              <span className="font-medium text-foreground">{c.name}</span>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-xs text-muted-foreground">{c.chair_code}</span>
-                <button onClick={() => copyCode(c.chair_code, "Chair code")} className="text-muted-foreground hover:text-accent">
-                  <Copy className="w-3.5 h-3.5" />
-                </button>
+            <div key={c.id} className="bg-secondary/50 rounded-xl px-4 py-3 mb-2">
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-foreground">{c.name}</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs text-muted-foreground">{c.chair_code}</span>
+                  <button onClick={() => copyCode(c.chair_code, "Chair code")} className="text-muted-foreground hover:text-accent"><Copy className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => { setEditingDelegations(editingDelegations === c.id ? null : c.id); setDelegationsText(c.delegations || ""); }} className="text-muted-foreground hover:text-accent"><Edit className="w-3.5 h-3.5" /></button>
+                </div>
               </div>
+              {/* Delegation matrix */}
+              {c.delegations && editingDelegations !== c.id && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {c.delegations.split(",").map((d: string) => d.trim()).filter(Boolean).map((d: string, i: number) => (
+                    <span key={i} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{d}</span>
+                  ))}
+                </div>
+              )}
+              {editingDelegations === c.id && (
+                <div className="mt-2 space-y-2">
+                  <Textarea
+                    value={delegationsText}
+                    onChange={(e) => setDelegationsText(e.target.value)}
+                    placeholder="Enter delegations comma-separated, e.g. USA, China, France, India"
+                    className="rounded-xl text-xs min-h-[60px]"
+                  />
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => saveDelegations(c.id)} className="rounded-lg gradient-primary border-0 text-xs">Save</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setEditingDelegations(null)} className="rounded-lg text-xs">Cancel</Button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
           <div className="flex gap-2 mt-3">
-            <Input
-              value={newCommittee}
-              onChange={(e) => setNewCommittee(e.target.value)}
-              placeholder="Committee name"
-              className="rounded-xl"
-              onKeyDown={(e) => e.key === "Enter" && addCommittee()}
-            />
-            <Button onClick={addCommittee} className="rounded-xl gradient-primary border-0">
-              <Plus className="w-4 h-4" />
-            </Button>
+            <Input value={newCommittee} onChange={(e) => setNewCommittee(e.target.value)} placeholder="Committee name" className="rounded-xl" onKeyDown={(e) => e.key === "Enter" && addCommittee()} />
+            <Button onClick={addCommittee} className="rounded-xl gradient-primary border-0"><Plus className="w-4 h-4" /></Button>
           </div>
         </div>
 
@@ -172,25 +186,19 @@ const SecGenDashboard = () => {
         {pendingMembers.filter((m: any) => !m.approved).length > 0 && (
           <div className="glass-card rounded-2xl p-5">
             <h2 className="font-display font-semibold text-foreground mb-3">Pending Approvals</h2>
-            {pendingMembers
-              .filter((m: any) => !m.approved)
-              .map((m: any) => (
-                <div key={m.id} className="flex items-center justify-between bg-secondary/50 rounded-xl px-4 py-2.5 mb-2">
-                  <span className="text-foreground">{m.display_name || "Unknown"}</span>
-                  <Button size="sm" onClick={() => approveMember(m.id)} className="rounded-lg gradient-accent border-0 text-xs">
-                    Approve
-                  </Button>
-                </div>
-              ))}
+            {pendingMembers.filter((m: any) => !m.approved).map((m: any) => (
+              <div key={m.id} className="flex items-center justify-between bg-secondary/50 rounded-xl px-4 py-2.5 mb-2">
+                <span className="text-foreground">{m.display_name || "Unknown"}</span>
+                <Button size="sm" onClick={() => approveMember(m.id)} className="rounded-lg gradient-accent border-0 text-xs">Approve</Button>
+              </div>
+            ))}
           </div>
         )}
 
-        {/* Schedule Manager */}
-        {conferenceDays.length > 0 && (
-          <ScheduleManager conferenceId={id!} conferenceDays={conferenceDays} />
-        )}
+        {/* Schedule */}
+        {conferenceDays.length > 0 && <ScheduleManager conferenceId={id!} conferenceDays={conferenceDays} />}
 
-        {/* AI Assistant */}
+        {/* AI */}
         <AIAssistant />
       </div>
     </div>
