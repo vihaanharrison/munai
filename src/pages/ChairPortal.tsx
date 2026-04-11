@@ -8,11 +8,16 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
   Loader2, Users, LogOut, User, Check, X, Plus, FileText,
-  Bell, BookOpen, AlertTriangle, Upload, Eye
+  Bell, BookOpen, AlertTriangle, Eye, MessageSquare, BarChart3, Mic, Shield
 } from "lucide-react";
 import munLogo from "@/assets/mun-ai-logo.png";
 import LiveConferenceClock from "@/components/LiveConferenceClock";
 import AIAssistant from "@/components/AIAssistant";
+import ChairPOIPanel from "@/components/chair/ChairPOIPanel";
+import ChairScoringSheet from "@/components/chair/ChairScoringSheet";
+import SpeakersList from "@/components/chair/SpeakersList";
+import BlocsManager from "@/components/chair/BlocsManager";
+import CrisisPanel from "@/components/chair/CrisisPanel";
 
 const DEVICE_KEY = "munai_chair_device";
 function getDeviceId() {
@@ -21,7 +26,7 @@ function getDeviceId() {
   return id;
 }
 
-type Tab = "delegates" | "agendas" | "updates" | "files" | "ai";
+type Tab = "delegates" | "speakers" | "scoring" | "pois" | "agendas" | "blocs" | "updates" | "crisis" | "files" | "ai";
 
 const ChairPortal = () => {
   const { conferenceId, committeeId } = useParams<{ conferenceId: string; committeeId: string }>();
@@ -52,14 +57,11 @@ const ChairPortal = () => {
 
   useEffect(() => { loadInitial(); }, [conferenceId, committeeId]);
 
-  // Realtime for new delegate registrations
   useEffect(() => {
     if (!committeeId) return;
     const channel = supabase
       .channel("chair-delegates")
-      .on("postgres_changes", { event: "*", schema: "public", table: "delegates", filter: `committee_id=eq.${committeeId}` }, () => {
-        loadDelegates();
-      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "delegates", filter: `committee_id=eq.${committeeId}` }, () => loadDelegates())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [committeeId]);
@@ -93,7 +95,7 @@ const ChairPortal = () => {
     const { data } = await supabase.from("delegates").select("*").eq("committee_id", committeeId).order("created_at", { ascending: true }) as any;
     const list = data || [];
     setDelegates(list);
-    setPendingCount(list.filter((d: any) => !d.approved).length);
+    setPendingCount(list.filter((d: any) => !d.approved && d.active).length);
   }, [committeeId]);
 
   const loadAgendas = async () => {
@@ -113,7 +115,6 @@ const ChairPortal = () => {
 
   const handleLogin = async () => {
     if (!displayName.trim()) { toast.error("Please enter your name"); return; }
-    // Check max 3 chairs
     const { data: existing } = await supabase.from("chair_sessions").select("id").eq("committee_id", committeeId!).eq("active", true) as any;
     if (existing && existing.length >= 3) { toast.error("Maximum 3 chairs per committee reached"); return; }
 
@@ -213,12 +214,17 @@ const ChairPortal = () => {
   const pendingDelegates = delegates.filter((d) => !d.approved && d.active);
   const approvedDelegates = delegates.filter((d) => d.approved);
 
-  const tabItems: { key: Tab; label: string; badge?: number }[] = [
-    { key: "delegates", label: "Delegates", badge: pendingCount },
-    { key: "agendas", label: "Agendas" },
-    { key: "updates", label: "Updates" },
-    { key: "files", label: "Files" },
-    { key: "ai", label: "AI" },
+  const tabItems: { key: Tab; label: string; icon: any; badge?: number }[] = [
+    { key: "delegates", label: "Delegates", icon: Users, badge: pendingCount },
+    { key: "speakers", label: "Speakers", icon: Mic },
+    { key: "scoring", label: "Scores", icon: BarChart3 },
+    { key: "pois", label: "POIs", icon: MessageSquare },
+    { key: "blocs", label: "Blocs", icon: Shield },
+    { key: "agendas", label: "Agendas", icon: BookOpen },
+    { key: "updates", label: "Updates", icon: Bell },
+    { key: "crisis", label: "Crisis", icon: AlertTriangle },
+    { key: "files", label: "Files", icon: FileText },
+    { key: "ai", label: "AI", icon: null },
   ];
 
   return (
@@ -243,11 +249,11 @@ const ChairPortal = () => {
         </div>
       )}
 
-      {/* Tab bar */}
+      {/* Tab bar - scrollable */}
       <div className="max-w-3xl mx-auto w-full px-4 mt-3">
-        <div className="flex gap-1 bg-secondary/50 rounded-xl p-1">
+        <div className="flex gap-1 bg-secondary/50 rounded-xl p-1 overflow-x-auto">
           {tabItems.map(({ key, label, badge }) => (
-            <button key={key} onClick={() => setTab(key)} className={`flex-1 text-xs font-medium py-2 rounded-lg transition-colors relative ${tab === key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}>
+            <button key={key} onClick={() => setTab(key)} className={`flex-shrink-0 text-xs font-medium py-2 px-3 rounded-lg transition-colors relative ${tab === key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}>
               {label}
               {badge && badge > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground rounded-full text-[10px] flex items-center justify-center">{badge}</span>}
             </button>
@@ -267,13 +273,20 @@ const ChairPortal = () => {
               </div>
               <p className="text-sm text-muted-foreground mb-4">{selectedDelegate.country}</p>
 
-              {/* Marks */}
               <div className="mb-4">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Marks</h3>
-                <p className="text-sm text-foreground">{JSON.stringify(selectedDelegate.marks || {})}</p>
+                {Object.entries(selectedDelegate.marks || {}).length > 0 ? (
+                  <div className="grid grid-cols-2 gap-1">
+                    {Object.entries(selectedDelegate.marks || {}).map(([key, val]) => (
+                      <div key={key} className="bg-secondary/50 rounded-lg px-3 py-1.5 flex justify-between">
+                        <span className="text-xs text-muted-foreground">{key}</span>
+                        <span className="text-xs font-semibold text-foreground">{String(val)}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : <p className="text-xs text-muted-foreground">No marks yet</p>}
               </div>
 
-              {/* Documents */}
               <div className="mb-4">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Documents</h3>
                 {delegateDocs.length === 0 ? <p className="text-xs text-muted-foreground">No documents submitted</p> : delegateDocs.map((doc: any) => (
@@ -284,15 +297,13 @@ const ChairPortal = () => {
                 ))}
               </div>
 
-              {/* POIs */}
               <div className="mb-4">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Points of Information</h3>
-                {delegatePois.length === 0 ? <p className="text-xs text-muted-foreground">No POIs</p> : delegatePois.map((poi: any) => (
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-1">POIs ({delegatePois.length})</h3>
+                {delegatePois.length === 0 ? <p className="text-xs text-muted-foreground">No POIs</p> : delegatePois.slice(0, 5).map((poi: any) => (
                   <div key={poi.id} className="bg-secondary/50 rounded-lg px-3 py-2 mb-1 text-xs text-foreground">{poi.content}</div>
                 ))}
               </div>
 
-              {/* Blocs */}
               <div>
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Bloc Membership</h3>
                 {delegateBlocs.length === 0 ? <p className="text-xs text-muted-foreground">Not in any bloc</p> : delegateBlocs.map((b: any) => (
@@ -305,7 +316,6 @@ const ChairPortal = () => {
 
         {tab === "delegates" && (
           <div className="space-y-4">
-            {/* Pending */}
             {pendingDelegates.length > 0 && (
               <div className="glass-card rounded-2xl p-5">
                 <h2 className="font-display font-semibold text-foreground text-sm flex items-center gap-2 mb-3">
@@ -326,7 +336,6 @@ const ChairPortal = () => {
               </div>
             )}
 
-            {/* Approved */}
             <div className="glass-card rounded-2xl p-5">
               <h2 className="font-display font-semibold text-foreground text-sm flex items-center gap-2 mb-3">
                 <Users className="w-4 h-4 text-accent" /> Approved Delegates ({approvedDelegates.length})
@@ -351,6 +360,22 @@ const ChairPortal = () => {
               )}
             </div>
           </div>
+        )}
+
+        {tab === "speakers" && committeeId && conferenceId && (
+          <SpeakersList committeeId={committeeId} conferenceId={conferenceId} delegates={delegates} onDelegatesUpdated={loadDelegates} />
+        )}
+
+        {tab === "scoring" && committeeId && conferenceId && (
+          <ChairScoringSheet committeeId={committeeId} conferenceId={conferenceId} delegates={delegates} committee={committee} onDelegatesUpdated={loadDelegates} />
+        )}
+
+        {tab === "pois" && committeeId && conferenceId && (
+          <ChairPOIPanel committeeId={committeeId} conferenceId={conferenceId} delegates={delegates} />
+        )}
+
+        {tab === "blocs" && committeeId && conferenceId && (
+          <BlocsManager committeeId={committeeId} conferenceId={conferenceId} delegates={delegates} />
         )}
 
         {tab === "agendas" && (
@@ -399,6 +424,10 @@ const ChairPortal = () => {
               ))}
             </div>
           </div>
+        )}
+
+        {tab === "crisis" && committeeId && conferenceId && (
+          <CrisisPanel committeeId={committeeId} conferenceId={conferenceId} committee={committee} />
         )}
 
         {tab === "files" && (
