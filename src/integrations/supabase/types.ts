@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      blocs: {
+        Row: {
+          committee_id: string
+          conference_id: string
+          created_at: string | null
+          discussion_status: string | null
+          file_name: string | null
+          file_url: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          committee_id: string
+          conference_id: string
+          created_at?: string | null
+          discussion_status?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          committee_id?: string
+          conference_id?: string
+          created_at?: string | null
+          discussion_status?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       chair_sessions: {
         Row: {
           active: boolean | null
@@ -211,6 +244,7 @@ export type Database = {
           delegations: string | null
           id: string
           name: string
+          scoring_columns: Json | null
           topic: string | null
         }
         Insert: {
@@ -221,6 +255,7 @@ export type Database = {
           delegations?: string | null
           id?: string
           name: string
+          scoring_columns?: Json | null
           topic?: string | null
         }
         Update: {
@@ -231,6 +266,7 @@ export type Database = {
           delegations?: string | null
           id?: string
           name?: string
+          scoring_columns?: Json | null
           topic?: string | null
         }
         Relationships: [
@@ -392,30 +428,69 @@ export type Database = {
         }
         Relationships: []
       }
+      crisis_triggers: {
+        Row: {
+          ai_summary: string | null
+          committee_id: string
+          conference_id: string
+          content: string | null
+          created_at: string | null
+          file_name: string | null
+          file_url: string | null
+          id: string
+        }
+        Insert: {
+          ai_summary?: string | null
+          committee_id: string
+          conference_id: string
+          content?: string | null
+          created_at?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+        }
+        Update: {
+          ai_summary?: string | null
+          committee_id?: string
+          conference_id?: string
+          content?: string | null
+          created_at?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
       delegate_blocs: {
         Row: {
+          bloc_id: string | null
           bloc_name: string
           committee_id: string
           conference_id: string
           created_at: string | null
           delegate_id: string
           id: string
+          is_leader: boolean | null
         }
         Insert: {
+          bloc_id?: string | null
           bloc_name: string
           committee_id: string
           conference_id: string
           created_at?: string | null
           delegate_id: string
           id?: string
+          is_leader?: boolean | null
         }
         Update: {
+          bloc_id?: string | null
           bloc_name?: string
           committee_id?: string
           conference_id?: string
           created_at?: string | null
           delegate_id?: string
           id?: string
+          is_leader?: boolean | null
         }
         Relationships: [
           {
@@ -559,6 +634,33 @@ export type Database = {
           },
         ]
       }
+      mod_caucus: {
+        Row: {
+          active: boolean | null
+          committee_id: string
+          conference_id: string
+          created_at: string | null
+          id: string
+          topic: string
+        }
+        Insert: {
+          active?: boolean | null
+          committee_id: string
+          conference_id: string
+          created_at?: string | null
+          id?: string
+          topic: string
+        }
+        Update: {
+          active?: boolean | null
+          committee_id?: string
+          conference_id?: string
+          created_at?: string | null
+          id?: string
+          topic?: string
+        }
+        Relationships: []
+      }
       pois: {
         Row: {
           committee_id: string
@@ -567,6 +669,8 @@ export type Database = {
           created_at: string | null
           from_delegate_id: string
           id: string
+          marked: boolean | null
+          status: string | null
           to_delegate_id: string
         }
         Insert: {
@@ -576,6 +680,8 @@ export type Database = {
           created_at?: string | null
           from_delegate_id: string
           id?: string
+          marked?: boolean | null
+          status?: string | null
           to_delegate_id: string
         }
         Update: {
@@ -585,6 +691,8 @@ export type Database = {
           created_at?: string | null
           from_delegate_id?: string
           id?: string
+          marked?: boolean | null
+          status?: string | null
           to_delegate_id?: string
         }
         Relationships: [
@@ -693,6 +801,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      speakers_list: {
+        Row: {
+          ai_score: number | null
+          chair_feedback: string | null
+          committee_id: string
+          conference_id: string
+          created_at: string | null
+          delegate_id: string
+          duration_seconds: number | null
+          id: string
+          list_type: string
+          position: number
+          speech_text: string | null
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          ai_score?: number | null
+          chair_feedback?: string | null
+          committee_id: string
+          conference_id: string
+          created_at?: string | null
+          delegate_id: string
+          duration_seconds?: number | null
+          id?: string
+          list_type?: string
+          position?: number
+          speech_text?: string | null
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          ai_score?: number | null
+          chair_feedback?: string | null
+          committee_id?: string
+          conference_id?: string
+          created_at?: string | null
+          delegate_id?: string
+          duration_seconds?: number | null
+          id?: string
+          list_type?: string
+          position?: number
+          speech_text?: string | null
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
