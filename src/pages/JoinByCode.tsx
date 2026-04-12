@@ -16,6 +16,32 @@ const JoinByCode = () => {
 
   const resolveCode = async (c: string) => {
     try {
+      // Check standalone committee code (6 chars) — delegate access
+      if (c.length === 6) {
+        const { data: sc } = await supabase
+          .from("standalone_committees" as any)
+          .select("id")
+          .eq("committee_code", c)
+          .maybeSingle() as any;
+        if (sc) {
+          navigate(`/standalone-delegate/${sc.id}`, { replace: true });
+          return;
+        }
+      }
+
+      // Check standalone chair code (8 chars) — chair access
+      if (c.length === 8) {
+        const { data: sc } = await supabase
+          .from("standalone_committees" as any)
+          .select("id")
+          .eq("chair_code", c)
+          .maybeSingle() as any;
+        if (sc) {
+          navigate(`/standalone/${sc.id}`, { replace: true });
+          return;
+        }
+      }
+
       // Check if it's a public conference code (6 chars)
       const { data: pubConf } = await supabase
         .from("conferences")
@@ -74,7 +100,7 @@ const JoinByCode = () => {
   };
 
   return (
-    <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#efeeea] flex items-center justify-center p-4">
       <div className="text-center animate-fade-in">
         <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto mb-4" />
         <p className="text-muted-foreground">{status}</p>
