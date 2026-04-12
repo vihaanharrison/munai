@@ -661,6 +661,39 @@ export type Database = {
         }
         Relationships: []
       }
+      planned_notes: {
+        Row: {
+          committee_id: string | null
+          conference_id: string | null
+          content: string | null
+          created_at: string | null
+          id: string
+          owner_id: string
+          owner_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          committee_id?: string | null
+          conference_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          owner_id: string
+          owner_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          committee_id?: string | null
+          conference_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          owner_id?: string
+          owner_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       pois: {
         Row: {
           committee_id: string
@@ -847,6 +880,45 @@ export type Database = {
           speech_text?: string | null
           started_at?: string | null
           status?: string
+        }
+        Relationships: []
+      }
+      standalone_committees: {
+        Row: {
+          chair_code: string
+          committee_code: string
+          created_at: string | null
+          created_by_device_id: string | null
+          crisis_enabled: boolean | null
+          delegations: string | null
+          id: string
+          name: string
+          scoring_columns: Json | null
+          topic: string | null
+        }
+        Insert: {
+          chair_code: string
+          committee_code: string
+          created_at?: string | null
+          created_by_device_id?: string | null
+          crisis_enabled?: boolean | null
+          delegations?: string | null
+          id?: string
+          name: string
+          scoring_columns?: Json | null
+          topic?: string | null
+        }
+        Update: {
+          chair_code?: string
+          committee_code?: string
+          created_at?: string | null
+          created_by_device_id?: string | null
+          crisis_enabled?: boolean | null
+          delegations?: string | null
+          id?: string
+          name?: string
+          scoring_columns?: Json | null
+          topic?: string | null
         }
         Relationships: []
       }
