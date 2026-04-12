@@ -18,6 +18,8 @@ import ChairScoringSheet from "@/components/chair/ChairScoringSheet";
 import SpeakersList from "@/components/chair/SpeakersList";
 import BlocsManager from "@/components/chair/BlocsManager";
 import CrisisPanel from "@/components/chair/CrisisPanel";
+import PlannedNotes from "@/components/PlannedNotes";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 const DEVICE_KEY = "munai_chair_device";
 function getDeviceId() {
@@ -239,7 +241,17 @@ const ChairPortal = () => {
               <p className="text-xs text-muted-foreground">Chair: {displayName}</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={handleEndSession} className="rounded-xl"><LogOut className="w-5 h-5" /></Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/hmun-rop")} className="rounded-xl" title="HMUN ROP"><BookOpen className="w-4 h-4" /></Button>
+            <ConfirmDialog
+              trigger={<Button variant="ghost" size="icon" className="rounded-xl" title="End Session"><LogOut className="w-5 h-5" /></Button>}
+              title="End Session"
+              description="Are you sure you want to end your chair session?"
+              onConfirm={handleEndSession}
+              confirmLabel="End Session"
+              variant="destructive"
+            />
+          </div>
         </div>
       </div>
 
@@ -441,6 +453,8 @@ const ChairPortal = () => {
 
         {tab === "ai" && <AIAssistant />}
       </div>
+
+      <PlannedNotes ownerType="chair" ownerId={getDeviceId()} conferenceId={conferenceId} committeeId={committeeId} />
     </div>
   );
 };

@@ -9,6 +9,8 @@ import { Copy, Plus, Users, Settings, LogOut, Loader2, Trash2, Edit } from "luci
 import munLogo from "@/assets/mun-ai-logo.png";
 import ScheduleManager from "@/components/ScheduleManager";
 import AIAssistant from "@/components/AIAssistant";
+import PlannedNotes from "@/components/PlannedNotes";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 const SecGenDashboard = () => {
   const { id } = useParams<{ id: string }>();
@@ -107,7 +109,14 @@ const SecGenDashboard = () => {
               <p className="text-sm text-muted-foreground">Secretary General Dashboard</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={handleSignOut} className="rounded-xl"><LogOut className="w-5 h-5" /></Button>
+          <ConfirmDialog
+            trigger={<Button variant="ghost" size="icon" className="rounded-xl" title="Sign Out"><LogOut className="w-5 h-5" /></Button>}
+            title="Sign Out"
+            description="Are you sure you want to sign out of the SecGen dashboard?"
+            onConfirm={handleSignOut}
+            confirmLabel="Sign Out"
+            variant="destructive"
+          />
         </div>
 
         {/* Codes */}
@@ -201,6 +210,8 @@ const SecGenDashboard = () => {
         {/* AI */}
         <AIAssistant />
       </div>
+
+      <PlannedNotes ownerType="secgen" ownerId={conference.secgen_user_id || id!} conferenceId={id} />
     </div>
   );
 };
