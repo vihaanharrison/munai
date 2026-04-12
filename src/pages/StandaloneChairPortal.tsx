@@ -8,10 +8,9 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
   Loader2, Users, LogOut, User, Check, X, Plus, FileText,
-  Bell, BookOpen, AlertTriangle, Eye, MessageSquare, BarChart3, Mic, Shield
+  Bell, BookOpen, AlertTriangle, Eye, MessageSquare, BarChart3, Mic, Shield, Info
 } from "lucide-react";
 import munLogo from "@/assets/mun-ai-logo.png";
-import LiveConferenceClock from "@/components/LiveConferenceClock";
 import AIAssistant from "@/components/AIAssistant";
 import ChairPOIPanel from "@/components/chair/ChairPOIPanel";
 import ChairScoringSheet from "@/components/chair/ChairScoringSheet";
@@ -21,66 +20,57 @@ import CrisisPanel from "@/components/chair/CrisisPanel";
 import PlannedNotes from "@/components/PlannedNotes";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
-const DEVICE_KEY = "munai_chair_device";
+const DEVICE_KEY = "munai_standalone_chair";
 function getDeviceId() {
   let id = localStorage.getItem(DEVICE_KEY);
   if (!id) { id = crypto.randomUUID(); localStorage.setItem(DEVICE_KEY, id); }
   return id;
 }
 
-type Tab = "delegates" | "speakers" | "scoring" | "pois" | "agendas" | "blocs" | "updates" | "crisis" | "files" | "ai";
+type Tab = "delegates" | "speakers" | "scoring" | "pois" | "agendas" | "blocs" | "updates" | "crisis" | "files" | "ai" | "notes";
 
-const ChairPortal = () => {
-  const { conferenceId, committeeId } = useParams<{ conferenceId: string; committeeId: string }>();
+const StandaloneChairPortal = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [step, setStep] = useState<"login" | "dashboard">("login");
   const [displayName, setDisplayName] = useState("");
   const [committee, setCommittee] = useState<any>(null);
-  const [conference, setConference] = useState<any>(null);
   const [delegates, setDelegates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("delegates");
   const [pendingCount, setPendingCount] = useState(0);
 
-  // Agendas
   const [agendas, setAgendas] = useState<any[]>([]);
   const [newAgenda, setNewAgenda] = useState("");
-
-  // Updates
   const [updateBody, setUpdateBody] = useState("");
   const [updates, setUpdates] = useState<any[]>([]);
-
-  // Delegate profile view
   const [selectedDelegate, setSelectedDelegate] = useState<any>(null);
   const [delegateDocs, setDelegateDocs] = useState<any[]>([]);
   const [delegatePois, setDelegatePois] = useState<any[]>([]);
   const [delegateBlocs, setDelegateBlocs] = useState<any[]>([]);
 
-  useEffect(() => { loadInitial(); }, [conferenceId, committeeId]);
+  useEffect(() => { loadInitial(); }, [id]);
 
   useEffect(() => {
-    if (!committeeId) return;
+    if (!id) return;
     const channel = supabase
-      .channel("chair-delegates")
-      .on("postgres_changes", { event: "*", schema: "public", table: "delegates", filter: `committee_id=eq.${committeeId}` }, () => loadDelegates())
+      .channel("standalone-chair-delegates")
+      .on("postgres_changes", { event: "*", schema: "public", table: "delegates", filter: `committee_id=eq.${id}` }, () => loadDelegates())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [committeeId]);
+  }, [id]);
 
   const loadInitial = async () => {
-    if (!conferenceId || !committeeId) return;
-    const [comRes, confRes] = await Promise.all([
-      supabase.from("committees").select("*").eq("id", committeeId).single(),
-      supabase.from("conferences").select("*").eq("id", conferenceId).single(),
-    ]);
-    setCommittee(comRes.data);
-    setConference(confRes.data);
+    if (!id) return;
+    const { data: sc } = await supabase.from("standalone_committees" as any).select("*").eq("id", id).single() as any;
+    if (!sc) { setLoading(false); return; }
+    setCommittee(sc);
 
     const deviceId = getDeviceId();
     const { data: existingSession } = await supabase
       .from("chair_sessions").select("*")
-      .eq("device_id", deviceId).eq("committee_id", committeeId).eq("active", true)
+      .eq("device_id", deviceId).eq("committee_id", id).eq("active", true)
       .maybeSingle() as any;
 
     if (existingSession) {
@@ -93,36 +83,34 @@ const ChairPortal = () => {
   };
 
   const loadDelegates = useCallback(async () => {
-    if (!committeeId) return;
-    const { data } = await supabase.from("delegates").select("*").eq("committee_id", committeeId).order("created_at", { ascending: true }) as any;
+    if (!id) return;
+    const { data } = await supabase.from("delegates").select("*").eq("committee_id", id).order("created_at", { ascending: true }) as any;
     const list = data || [];
     setDelegates(list);
     setPendingCount(list.filter((d: any) => !d.approved && d.active).length);
-  }, [committeeId]);
+  }, [id]);
 
   const loadAgendas = async () => {
-    if (!committeeId) return;
-    const { data } = await supabase.from("committee_agendas").select("*").eq("committee_id", committeeId).order("sort_order") as any;
+    if (!id) return;
+    const { data } = await supabase.from("committee_agendas").select("*").eq("committee_id", id).order("sort_order") as any;
     setAgendas(data || []);
   };
 
   const loadUpdates = async () => {
-    if (!conferenceId || !committeeId) return;
-    const { data } = await supabase.from("conference_updates").select("*")
-      .eq("conference_id", conferenceId)
-      .or(`committee_id.eq.${committeeId},committee_id.is.null`)
-      .order("created_at", { ascending: false }) as any;
+    if (!id) return;
+    const { data } = await supabase.from("conference_updates").select("*").eq("committee_id", id).order("created_at", { ascending: false }) as any;
     setUpdates(data || []);
   };
 
   const handleLogin = async () => {
     if (!displayName.trim()) { toast.error("Please enter your name"); return; }
-    const { data: existing } = await supabase.from("chair_sessions").select("id").eq("committee_id", committeeId!).eq("active", true) as any;
+    const { data: existing } = await supabase.from("chair_sessions").select("id").eq("committee_id", id!).eq("active", true) as any;
     if (existing && existing.length >= 3) { toast.error("Maximum 3 chairs per committee reached"); return; }
 
     const deviceId = getDeviceId();
+    // Use a placeholder conference_id for standalone
     const { data, error } = await supabase.from("chair_sessions").insert({
-      device_id: deviceId, conference_id: conferenceId!, committee_id: committeeId!,
+      device_id: deviceId, conference_id: id!, committee_id: id!,
       display_name: displayName.trim(), active: true,
     } as any).select().single();
 
@@ -136,7 +124,6 @@ const ChairPortal = () => {
   const handleEndSession = async () => {
     if (!sessionId) return;
     await supabase.from("chair_sessions").update({ active: false } as any).eq("id", sessionId);
-    localStorage.removeItem(DEVICE_KEY);
     toast.success("Session ended");
     navigate("/");
   };
@@ -154,9 +141,9 @@ const ChairPortal = () => {
   };
 
   const addAgenda = async () => {
-    if (!newAgenda.trim() || !committeeId || !conferenceId) return;
+    if (!newAgenda.trim() || !id) return;
     await supabase.from("committee_agendas").insert({
-      committee_id: committeeId, conference_id: conferenceId,
+      committee_id: id, conference_id: id,
       name: newAgenda.trim(), sort_order: agendas.length,
     } as any);
     setNewAgenda("");
@@ -164,16 +151,16 @@ const ChairPortal = () => {
     toast.success("Agenda added");
   };
 
-  const pushChairUpdate = async () => {
-    if (!updateBody.trim() || !conferenceId || !committeeId) return;
+  const pushUpdate = async () => {
+    if (!updateBody.trim() || !id) return;
     await supabase.from("conference_updates").insert({
-      conference_id: conferenceId, committee_id: committeeId,
+      conference_id: id, committee_id: id,
       author_name: displayName, author_role: "chair",
       body: updateBody.trim(),
     } as any);
     setUpdateBody("");
     loadUpdates();
-    toast.success("Update pushed to your committee");
+    toast.success("Update pushed");
   };
 
   const viewDelegateProfile = async (delegate: any) => {
@@ -188,18 +175,18 @@ const ChairPortal = () => {
     setDelegateBlocs(blocsRes.data || []);
   };
 
-  if (loading) {
-    return <div className="min-h-screen bg-[#efeeea] flex items-center justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>;
-  }
+  if (loading) return <div className="min-h-screen bg-[#efeeea] flex items-center justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>;
+
+  if (!committee) return <div className="min-h-screen bg-[#efeeea] flex items-center justify-center"><p className="text-muted-foreground">Committee not found</p></div>;
 
   if (step === "login") {
     return (
       <div className="min-h-screen bg-[#efeeea] flex items-center justify-center p-4">
         <div className="w-full max-w-sm animate-fade-in">
           <div className="flex flex-col items-center mb-8">
-            <img src={munLogo} alt="MUN AI" className="h-16 object-contain mb-4" />
+            <img src={munLogo} alt="MUN AI" className="h-20 object-contain mb-4" />
             <h1 className="font-display text-xl font-bold text-foreground">Chair Login</h1>
-            <p className="text-sm text-muted-foreground mt-1">{committee?.name}</p>
+            <p className="text-sm text-muted-foreground mt-1">{committee.name}</p>
           </div>
           <div className="glass-card rounded-2xl p-6 space-y-4">
             <div>
@@ -216,29 +203,28 @@ const ChairPortal = () => {
   const pendingDelegates = delegates.filter((d) => !d.approved && d.active);
   const approvedDelegates = delegates.filter((d) => d.approved);
 
-  const tabItems: { key: Tab; label: string; icon: any; badge?: number }[] = [
-    { key: "delegates", label: "Delegates", icon: Users, badge: pendingCount },
-    { key: "speakers", label: "Speakers", icon: Mic },
-    { key: "scoring", label: "Scores", icon: BarChart3 },
-    { key: "pois", label: "POIs", icon: MessageSquare },
-    { key: "blocs", label: "Blocs", icon: Shield },
-    { key: "agendas", label: "Agendas", icon: BookOpen },
-    { key: "updates", label: "Updates", icon: Bell },
-    { key: "crisis", label: "Crisis", icon: AlertTriangle },
-    { key: "files", label: "Files", icon: FileText },
-    { key: "ai", label: "AI", icon: null },
+  const tabItems: { key: Tab; label: string; badge?: number }[] = [
+    { key: "delegates", label: "Delegates", badge: pendingCount },
+    { key: "speakers", label: "Speakers" },
+    { key: "scoring", label: "Scores" },
+    { key: "pois", label: "POIs" },
+    { key: "blocs", label: "Blocs" },
+    { key: "agendas", label: "Agendas" },
+    { key: "updates", label: "Updates" },
+    { key: "crisis", label: "Crisis" },
+    { key: "files", label: "Files" },
+    { key: "ai", label: "AI" },
   ];
 
   return (
     <div className="min-h-screen bg-[#efeeea] flex flex-col">
-      {/* Header */}
       <div className="p-4 pb-0">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={munLogo} alt="MUN AI" className="h-10 object-contain" />
             <div>
-              <h1 className="font-display text-lg font-bold text-foreground">{committee?.name}</h1>
-              <p className="text-xs text-muted-foreground">Chair: {displayName}</p>
+              <h1 className="font-display text-lg font-bold text-foreground">{committee.name}</h1>
+              <p className="text-xs text-muted-foreground">Chair: {displayName} · Standalone</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -246,7 +232,7 @@ const ChairPortal = () => {
             <ConfirmDialog
               trigger={<Button variant="ghost" size="icon" className="rounded-xl" title="End Session"><LogOut className="w-5 h-5" /></Button>}
               title="End Session"
-              description="Are you sure you want to end your chair session?"
+              description="Are you sure you want to end your chair session? You will be returned to the homepage."
               onConfirm={handleEndSession}
               confirmLabel="End Session"
               variant="destructive"
@@ -255,13 +241,6 @@ const ChairPortal = () => {
         </div>
       </div>
 
-      {conferenceId && (
-        <div className="max-w-3xl mx-auto w-full px-4 mt-3">
-          <LiveConferenceClock conferenceId={conferenceId} />
-        </div>
-      )}
-
-      {/* Tab bar - scrollable */}
       <div className="max-w-3xl mx-auto w-full px-4 mt-3">
         <div className="flex gap-1 bg-secondary/50 rounded-xl p-1 overflow-x-auto">
           {tabItems.map(({ key, label, badge }) => (
@@ -273,18 +252,15 @@ const ChairPortal = () => {
         </div>
       </div>
 
-      {/* Content */}
       <div className="flex-1 max-w-3xl mx-auto w-full p-4 animate-fade-in">
-        {/* Delegate Profile Modal */}
         {selectedDelegate && (
           <div className="fixed inset-0 bg-foreground/30 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedDelegate(null)}>
             <div className="glass-card rounded-2xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-display font-bold text-foreground">{selectedDelegate.name}</h2>
-                <button onClick={() => setSelectedDelegate(null)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
+                <button onClick={() => setSelectedDelegate(null)}><X className="w-5 h-5 text-muted-foreground" /></button>
               </div>
               <p className="text-sm text-muted-foreground mb-4">{selectedDelegate.country}</p>
-
               <div className="mb-4">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Marks</h3>
                 {Object.entries(selectedDelegate.marks || {}).length > 0 ? (
@@ -298,26 +274,23 @@ const ChairPortal = () => {
                   </div>
                 ) : <p className="text-xs text-muted-foreground">No marks yet</p>}
               </div>
-
               <div className="mb-4">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Documents</h3>
-                {delegateDocs.length === 0 ? <p className="text-xs text-muted-foreground">No documents submitted</p> : delegateDocs.map((doc: any) => (
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Documents ({delegateDocs.length})</h3>
+                {delegateDocs.map((doc: any) => (
                   <div key={doc.id} className="bg-secondary/50 rounded-lg px-3 py-2 mb-1">
                     <span className="text-xs font-medium text-foreground">{doc.doc_type === "position_paper" ? "Position Paper" : "GSL Speech"}</span>
-                    <span className={`ml-2 text-xs ${doc.status === "approved" ? "text-accent" : doc.status === "rejected" ? "text-destructive" : "text-muted-foreground"}`}>{doc.status}</span>
+                    <span className={`ml-2 text-xs ${doc.status === "approved" ? "text-accent" : "text-muted-foreground"}`}>{doc.status}</span>
                   </div>
                 ))}
               </div>
-
               <div className="mb-4">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-1">POIs ({delegatePois.length})</h3>
-                {delegatePois.length === 0 ? <p className="text-xs text-muted-foreground">No POIs</p> : delegatePois.slice(0, 5).map((poi: any) => (
+                {delegatePois.slice(0, 5).map((poi: any) => (
                   <div key={poi.id} className="bg-secondary/50 rounded-lg px-3 py-2 mb-1 text-xs text-foreground">{poi.content}</div>
                 ))}
               </div>
-
               <div>
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Bloc Membership</h3>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Blocs</h3>
                 {delegateBlocs.length === 0 ? <p className="text-xs text-muted-foreground">Not in any bloc</p> : delegateBlocs.map((b: any) => (
                   <span key={b.id} className="inline-block bg-accent/10 text-accent text-xs px-2 py-0.5 rounded-full mr-1">{b.bloc_name}</span>
                 ))}
@@ -330,15 +303,10 @@ const ChairPortal = () => {
           <div className="space-y-4">
             {pendingDelegates.length > 0 && (
               <div className="glass-card rounded-2xl p-5">
-                <h2 className="font-display font-semibold text-foreground text-sm flex items-center gap-2 mb-3">
-                  <Bell className="w-4 h-4 text-destructive" /> Pending Approvals ({pendingDelegates.length})
-                </h2>
+                <h2 className="font-display font-semibold text-foreground text-sm flex items-center gap-2 mb-3"><Bell className="w-4 h-4 text-destructive" /> Pending ({pendingDelegates.length})</h2>
                 {pendingDelegates.map((d: any) => (
                   <div key={d.id} className="flex items-center justify-between bg-secondary/50 rounded-xl px-4 py-3 mb-2">
-                    <div>
-                      <p className="font-medium text-foreground text-sm">{d.name}</p>
-                      <p className="text-xs text-muted-foreground">{d.country}</p>
-                    </div>
+                    <div><p className="font-medium text-foreground text-sm">{d.name}</p><p className="text-xs text-muted-foreground">{d.country}</p></div>
                     <div className="flex gap-2">
                       <Button size="sm" onClick={() => approveDelegate(d.id)} className="rounded-lg gradient-primary border-0 text-xs h-7 px-3"><Check className="w-3 h-3 mr-1" /> Approve</Button>
                       <Button size="sm" variant="ghost" onClick={() => denyDelegate(d.id)} className="rounded-lg text-xs h-7 px-3"><X className="w-3 h-3" /></Button>
@@ -347,24 +315,13 @@ const ChairPortal = () => {
                 ))}
               </div>
             )}
-
             <div className="glass-card rounded-2xl p-5">
-              <h2 className="font-display font-semibold text-foreground text-sm flex items-center gap-2 mb-3">
-                <Users className="w-4 h-4 text-accent" /> Approved Delegates ({approvedDelegates.length})
-              </h2>
-              {approvedDelegates.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">No approved delegates yet.</p>
-              ) : (
+              <h2 className="font-display font-semibold text-foreground text-sm flex items-center gap-2 mb-3"><Users className="w-4 h-4 text-accent" /> Approved ({approvedDelegates.length})</h2>
+              {approvedDelegates.length === 0 ? <p className="text-sm text-muted-foreground text-center py-4">No delegates yet.</p> : (
                 <div className="space-y-2">
                   {approvedDelegates.map((d: any) => (
                     <div key={d.id} className="flex items-center justify-between bg-secondary/50 rounded-xl px-4 py-3 cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => viewDelegateProfile(d)}>
-                      <div className="flex items-center gap-3">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium text-foreground text-sm">{d.name}</p>
-                          <p className="text-xs text-muted-foreground">{d.country}</p>
-                        </div>
-                      </div>
+                      <div className="flex items-center gap-3"><User className="w-4 h-4 text-muted-foreground" /><div><p className="font-medium text-foreground text-sm">{d.name}</p><p className="text-xs text-muted-foreground">{d.country}</p></div></div>
                       <Eye className="w-4 h-4 text-muted-foreground" />
                     </div>
                   ))}
@@ -374,38 +331,18 @@ const ChairPortal = () => {
           </div>
         )}
 
-        {tab === "speakers" && committeeId && conferenceId && (
-          <SpeakersList committeeId={committeeId} conferenceId={conferenceId} delegates={delegates} onDelegatesUpdated={loadDelegates} />
-        )}
-
-        {tab === "scoring" && committeeId && conferenceId && (
-          <ChairScoringSheet committeeId={committeeId} conferenceId={conferenceId} delegates={delegates} committee={committee} onDelegatesUpdated={loadDelegates} />
-        )}
-
-        {tab === "pois" && committeeId && conferenceId && (
-          <ChairPOIPanel committeeId={committeeId} conferenceId={conferenceId} delegates={delegates} />
-        )}
-
-        {tab === "blocs" && committeeId && conferenceId && (
-          <BlocsManager committeeId={committeeId} conferenceId={conferenceId} delegates={delegates} />
-        )}
+        {tab === "speakers" && id && <SpeakersList committeeId={id} conferenceId={id} delegates={delegates} onDelegatesUpdated={loadDelegates} />}
+        {tab === "scoring" && id && <ChairScoringSheet committeeId={id} conferenceId={id} delegates={delegates} committee={committee} onDelegatesUpdated={loadDelegates} />}
+        {tab === "pois" && id && <ChairPOIPanel committeeId={id} conferenceId={id} delegates={delegates} />}
+        {tab === "blocs" && id && <BlocsManager committeeId={id} conferenceId={id} delegates={delegates} />}
 
         {tab === "agendas" && (
           <div className="glass-card rounded-2xl p-5 space-y-3">
-            <h2 className="font-display font-semibold text-foreground text-sm flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-accent" /> Agendas
-            </h2>
-            {committee?.crisis_enabled && (
-              <div className="bg-destructive/10 rounded-xl px-4 py-2 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-destructive" />
-                <span className="text-xs text-destructive font-medium">Crisis mode is active</span>
-              </div>
-            )}
+            <h2 className="font-display font-semibold text-foreground text-sm flex items-center gap-2"><BookOpen className="w-4 h-4 text-accent" /> Agendas</h2>
             {agendas.map((a: any) => (
               <div key={a.id} className="bg-secondary/50 rounded-xl px-4 py-3">
                 <p className="font-medium text-foreground text-sm">{a.name}</p>
-                {a.description && <p className="text-xs text-muted-foreground mt-1">{a.description}</p>}
-                {a.ai_summary && <p className="text-xs text-accent mt-1">AI Summary: {a.ai_summary}</p>}
+                {a.ai_summary && <p className="text-xs text-accent mt-1">AI: {a.ai_summary}</p>}
               </div>
             ))}
             <div className="flex gap-2">
@@ -418,45 +355,35 @@ const ChairPortal = () => {
         {tab === "updates" && (
           <div className="space-y-4">
             <div className="glass-card rounded-2xl p-5 space-y-3">
-              <h2 className="font-display font-semibold text-foreground text-sm flex items-center gap-2">
-                <Bell className="w-4 h-4 text-accent" /> Push Committee Update
-              </h2>
-              <p className="text-xs text-muted-foreground">Updates will only be visible to delegates in your committee.</p>
+              <h2 className="font-display font-semibold text-foreground text-sm flex items-center gap-2"><Bell className="w-4 h-4 text-accent" /> Push Update</h2>
               <Textarea value={updateBody} onChange={(e) => setUpdateBody(e.target.value)} placeholder="Write an update..." className="rounded-xl min-h-[60px]" />
-              <Button onClick={pushChairUpdate} className="w-full rounded-xl gradient-primary border-0 font-semibold">Publish</Button>
+              <Button onClick={pushUpdate} className="w-full rounded-xl gradient-primary border-0 font-semibold">Publish</Button>
             </div>
-            <div className="space-y-2">
-              {updates.map((u: any) => (
-                <div key={u.id} className="glass-card rounded-2xl p-4">
-                  <p className="text-xs text-accent font-medium mb-1">Update from: {u.author_name} ({u.author_role})</p>
-                  {u.title && <h3 className="font-display font-semibold text-foreground text-sm">{u.title}</h3>}
-                  <p className="text-sm text-foreground mt-1">{u.body}</p>
-                  <p className="text-xs text-muted-foreground mt-2">{new Date(u.created_at).toLocaleString()}</p>
-                </div>
-              ))}
-            </div>
+            {updates.map((u: any) => (
+              <div key={u.id} className="glass-card rounded-2xl p-4">
+                <p className="text-xs text-accent font-medium mb-1">Update from: {u.author_name}</p>
+                <p className="text-sm text-foreground mt-1">{u.body}</p>
+                <p className="text-xs text-muted-foreground mt-2">{new Date(u.created_at).toLocaleString()}</p>
+              </div>
+            ))}
           </div>
         )}
 
-        {tab === "crisis" && committeeId && conferenceId && (
-          <CrisisPanel committeeId={committeeId} conferenceId={conferenceId} committee={committee} />
-        )}
+        {tab === "crisis" && id && <CrisisPanel committeeId={id} conferenceId={id} committee={committee} />}
 
         {tab === "files" && (
           <div className="glass-card rounded-2xl p-5">
-            <h2 className="font-display font-semibold text-foreground text-sm flex items-center gap-2 mb-3">
-              <FileText className="w-4 h-4 text-accent" /> Committee Files
-            </h2>
-            <p className="text-sm text-muted-foreground text-center py-4">File upload coming soon — storage bucket is ready.</p>
+            <h2 className="font-display font-semibold text-foreground text-sm flex items-center gap-2 mb-3"><FileText className="w-4 h-4 text-accent" /> Committee Files</h2>
+            <p className="text-sm text-muted-foreground text-center py-4">File upload coming soon.</p>
           </div>
         )}
 
         {tab === "ai" && <AIAssistant />}
       </div>
 
-      <PlannedNotes ownerType="chair" ownerId={getDeviceId()} conferenceId={conferenceId} committeeId={committeeId} />
+      <PlannedNotes ownerType="chair" ownerId={getDeviceId()} committeeId={id} />
     </div>
   );
 };
 
-export default ChairPortal;
+export default StandaloneChairPortal;
