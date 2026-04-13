@@ -90,6 +90,13 @@ export type Database = {
             referencedRelation: "conferences"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "chair_sessions_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "conferences_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       chat_messages: {
@@ -132,6 +139,13 @@ export type Database = {
             columns: ["conference_id"]
             isOneToOne: false
             referencedRelation: "conferences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "conferences_public"
             referencedColumns: ["id"]
           },
         ]
@@ -188,6 +202,13 @@ export type Database = {
             referencedRelation: "conferences"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "committee_agendas_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "conferences_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       committee_files: {
@@ -231,6 +252,13 @@ export type Database = {
             columns: ["conference_id"]
             isOneToOne: false
             referencedRelation: "conferences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "committee_files_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "conferences_public"
             referencedColumns: ["id"]
           },
         ]
@@ -277,6 +305,13 @@ export type Database = {
             referencedRelation: "conferences"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "committees_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "conferences_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       conference_days: {
@@ -307,6 +342,13 @@ export type Database = {
             columns: ["conference_id"]
             isOneToOne: false
             referencedRelation: "conferences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conference_days_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "conferences_public"
             referencedColumns: ["id"]
           },
         ]
@@ -364,6 +406,13 @@ export type Database = {
             columns: ["conference_id"]
             isOneToOne: false
             referencedRelation: "conferences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conference_updates_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "conferences_public"
             referencedColumns: ["id"]
           },
         ]
@@ -508,6 +557,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "delegate_blocs_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "conferences_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "delegate_blocs_delegate_id_fkey"
             columns: ["delegate_id"]
             isOneToOne: false
@@ -566,6 +622,13 @@ export type Database = {
             columns: ["conference_id"]
             isOneToOne: false
             referencedRelation: "conferences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delegate_documents_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "conferences_public"
             referencedColumns: ["id"]
           },
           {
@@ -630,6 +693,13 @@ export type Database = {
             columns: ["conference_id"]
             isOneToOne: false
             referencedRelation: "conferences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delegates_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "conferences_public"
             referencedColumns: ["id"]
           },
         ]
@@ -744,6 +814,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "pois_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "conferences_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "pois_from_delegate_id_fkey"
             columns: ["from_delegate_id"]
             isOneToOne: false
@@ -795,6 +872,13 @@ export type Database = {
             referencedRelation: "conferences"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "schedule_sessions_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "conferences_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       secretariat_tasks: {
@@ -831,6 +915,13 @@ export type Database = {
             columns: ["conference_id"]
             isOneToOne: false
             referencedRelation: "conferences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secretariat_tasks_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "conferences_public"
             referencedColumns: ["id"]
           },
         ]
@@ -964,11 +1055,71 @@ export type Database = {
             referencedRelation: "conferences"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_roles_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "conferences_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
     Views: {
-      [_ in never]: never
+      conferences_public: {
+        Row: {
+          banner_url: string | null
+          created_at: string | null
+          email: string | null
+          end_date: string | null
+          id: string | null
+          location: string | null
+          logo_url: string | null
+          name: string | null
+          payment_amount: string | null
+          payment_details: string | null
+          payment_link: string | null
+          public_code: string | null
+          secgen_user_id: string | null
+          start_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          banner_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          end_date?: string | null
+          id?: string | null
+          location?: string | null
+          logo_url?: string | null
+          name?: string | null
+          payment_amount?: string | null
+          payment_details?: string | null
+          payment_link?: string | null
+          public_code?: string | null
+          secgen_user_id?: string | null
+          start_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          banner_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          end_date?: string | null
+          id?: string | null
+          location?: string | null
+          logo_url?: string | null
+          name?: string | null
+          payment_amount?: string | null
+          payment_details?: string | null
+          payment_link?: string | null
+          public_code?: string | null
+          secgen_user_id?: string | null
+          start_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       generate_code: { Args: { length?: number }; Returns: string }
@@ -980,6 +1131,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      lookup_code: { Args: { input_code: string }; Returns: Json }
     }
     Enums: {
       app_role: "secgen" | "secretariat" | "chair" | "delegate"
