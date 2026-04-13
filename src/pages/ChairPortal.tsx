@@ -119,6 +119,12 @@ const ChairPortal = () => {
     setUpdates(data || []);
   };
 
+  const loadCommitteeFiles = async () => {
+    if (!committeeId) return;
+    const { data } = await supabase.from("committee_files").select("*").eq("committee_id", committeeId).order("created_at", { ascending: false }) as any;
+    setCommitteeFiles(data || []);
+  };
+
   const handleLogin = async () => {
     if (!displayName.trim()) { toast.error("Please enter your name"); return; }
     const { data: existing } = await supabase.from("chair_sessions").select("id").eq("committee_id", committeeId!).eq("active", true) as any;
