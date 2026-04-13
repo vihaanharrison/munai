@@ -91,7 +91,7 @@ const ChairPortal = () => {
       setSessionId(existingSession.id);
       setDisplayName(existingSession.display_name || "");
       setStep("dashboard");
-      await Promise.all([loadDelegates(), loadAgendas(), loadUpdates()]);
+      await Promise.all([loadDelegates(), loadAgendas(), loadUpdates(), loadCommitteeFiles()]);
     }
     setLoading(false);
   };
