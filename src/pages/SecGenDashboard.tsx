@@ -16,7 +16,9 @@ const SecGenDashboard = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [conference, setConference] = useState<any>(null);
+  const [conferenceCodes, setConferenceCodes] = useState<any>(null);
   const [committees, setCommittees] = useState<any[]>([]);
+  const [committeeChairCodes, setCommitteeChairCodes] = useState<Record<string, string>>({});
   const [pendingMembers, setPendingMembers] = useState<any[]>([]);
   const [newCommittee, setNewCommittee] = useState("");
   const [loading, setLoading] = useState(true);
@@ -27,14 +29,25 @@ const SecGenDashboard = () => {
 
   const loadData = async () => {
     if (!id) return;
-    const [confRes, comRes, membersRes] = await Promise.all([
+    const [confRes, comRes, membersRes, codesRes] = await Promise.all([
       supabase.from("conferences").select("*").eq("id", id).single(),
       supabase.from("committees").select("*").eq("conference_id", id),
       supabase.from("user_roles").select("*").eq("conference_id", id).eq("role", "secretariat" as any),
+      supabase.rpc("get_conference_codes", { conf_id: id }),
     ]);
     setConference(confRes.data);
-    setCommittees((comRes.data as any) || []);
+    setConferenceCodes(codesRes.data);
+    const comms = (comRes.data as any) || [];
+    setCommittees(comms);
     setPendingMembers((membersRes.data as any) || []);
+    
+    // Fetch chair codes for each committee via secure RPC
+    const chairCodesMap: Record<string, string> = {};
+    await Promise.all(comms.map(async (c: any) => {
+      const { data } = await supabase.rpc("get_committee_chair_code", { comm_id: c.id });
+      if (data) chairCodesMap[c.id] = data as string;
+    }));
+    setCommitteeChairCodes(chairCodesMap);
     setLoading(false);
   };
 
