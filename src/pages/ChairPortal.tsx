@@ -139,7 +139,7 @@ const ChairPortal = () => {
     if (error) { toast.error(error.message); return; }
     setSessionId((data as any).id);
     setStep("dashboard");
-    await Promise.all([loadDelegates(), loadAgendas(), loadUpdates()]);
+    await Promise.all([loadDelegates(), loadAgendas(), loadUpdates(), loadCommitteeFiles()]);
     toast.success("Logged in as Chair");
   };
 
