@@ -67,7 +67,7 @@ const CreateConference = () => {
         secretariat_code: secretariatCode,
         public_code: publicCode,
         secgen_user_id: session.user.id,
-      } as any).select().single();
+      }).select().single();
 
       if (error) throw error;
 
