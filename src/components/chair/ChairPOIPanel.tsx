@@ -39,7 +39,6 @@ const ChairPOIPanel = ({ committeeId, conferenceId, delegates }: Props) => {
 
   const approvePoi = async (poiId: string) => {
     await supabase.from("pois").update({ status: "approved" } as any).eq("id", poiId);
-    // Award +1 POI point to submitting delegate
     const poi = pois.find((p) => p.id === poiId);
     if (poi) {
       const delegate = delegates.find((d) => d.id === poi.from_delegate_id);
@@ -48,6 +47,12 @@ const ChairPOIPanel = ({ committeeId, conferenceId, delegates }: Props) => {
         marks.POIs = (marks.POIs || 0) + 1;
         await supabase.from("delegates").update({ marks } as any).eq("id", delegate.id);
       }
+      await supabase.rpc("log_audit_event", {
+        p_conference_id: conferenceId, p_committee_id: committeeId,
+        p_action: "poi_approved", p_actor_type: "chair",
+        p_target_table: "pois", p_target_id: poiId,
+        p_details: { from: getDelegateName(poi.from_delegate_id), to: getDelegateName(poi.to_delegate_id) },
+      } as any);
     }
     loadPois();
     toast.success("POI approved & +1 point awarded");
@@ -55,6 +60,15 @@ const ChairPOIPanel = ({ committeeId, conferenceId, delegates }: Props) => {
 
   const rejectPoi = async (poiId: string) => {
     await supabase.from("pois").update({ status: "rejected" } as any).eq("id", poiId);
+    const poi = pois.find((p) => p.id === poiId);
+    if (poi) {
+      await supabase.rpc("log_audit_event", {
+        p_conference_id: conferenceId, p_committee_id: committeeId,
+        p_action: "poi_rejected", p_actor_type: "chair",
+        p_target_table: "pois", p_target_id: poiId,
+        p_details: { from: getDelegateName(poi.from_delegate_id), to: getDelegateName(poi.to_delegate_id) },
+      } as any);
+    }
     loadPois();
     toast.success("POI rejected");
   };
