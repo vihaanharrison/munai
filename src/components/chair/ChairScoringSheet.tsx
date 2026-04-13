@@ -43,9 +43,16 @@ const ChairScoringSheet = ({ committeeId, conferenceId, delegates, committee, on
   const updateCell = async (delegateId: string, col: string, value: number) => {
     const delegate = delegates.find((d) => d.id === delegateId);
     if (!delegate) return;
+    const oldValue = (delegate.marks || {})[col] || 0;
     const marks = { ...(delegate.marks || {}) };
     marks[col] = value;
     await supabase.from("delegates").update({ marks } as any).eq("id", delegateId);
+    await supabase.rpc("log_audit_event", {
+      p_conference_id: conferenceId, p_committee_id: committeeId,
+      p_action: "mark_change_manual", p_actor_type: "chair",
+      p_target_table: "delegates", p_target_id: delegateId,
+      p_details: { column: col, old_value: oldValue, new_value: value, delegate_country: delegate.country },
+    } as any);
     onDelegatesUpdated();
   };
 
@@ -90,6 +97,12 @@ const ChairScoringSheet = ({ committeeId, conferenceId, delegates, committee, on
             marks[result.column] = (marks[result.column] || 0) + result.points;
           }
           await supabase.from("delegates").update({ marks } as any).eq("id", delegate.id);
+          await supabase.rpc("log_audit_event", {
+            p_conference_id: conferenceId, p_committee_id: committeeId,
+            p_action: "mark_change_ai", p_actor_type: "chair",
+            p_target_table: "delegates", p_target_id: delegate.id,
+            p_details: { command: aiCommand, column: result.column, points: result.points, action: result.action, delegate_country: delegate.country },
+          } as any);
           onDelegatesUpdated();
           toast.success(`${result.action === "deduct" ? "Deducted" : "Added"} ${Math.abs(result.points)} ${result.column} ${result.action === "deduct" ? "from" : "to"} ${delegate.country}`);
         }

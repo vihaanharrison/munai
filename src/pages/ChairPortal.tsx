@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
   Loader2, Users, LogOut, User, Check, X, Plus, FileText,
-  Bell, BookOpen, AlertTriangle, Eye, MessageSquare, BarChart3, Mic, Shield
+  Bell, BookOpen, AlertTriangle, Eye, MessageSquare, BarChart3, Mic, Shield, Upload, Trash2
 } from "lucide-react";
 import munLogo from "@/assets/mun-ai-logo.png";
 import LiveConferenceClock from "@/components/LiveConferenceClock";
@@ -51,6 +51,10 @@ const ChairPortal = () => {
   const [updateBody, setUpdateBody] = useState("");
   const [updates, setUpdates] = useState<any[]>([]);
 
+  // Files
+  const [committeeFiles, setCommitteeFiles] = useState<any[]>([]);
+  const [uploadingFile, setUploadingFile] = useState(false);
+
   // Delegate profile view
   const [selectedDelegate, setSelectedDelegate] = useState<any>(null);
   const [delegateDocs, setDelegateDocs] = useState<any[]>([]);
@@ -87,7 +91,7 @@ const ChairPortal = () => {
       setSessionId(existingSession.id);
       setDisplayName(existingSession.display_name || "");
       setStep("dashboard");
-      await Promise.all([loadDelegates(), loadAgendas(), loadUpdates()]);
+      await Promise.all([loadDelegates(), loadAgendas(), loadUpdates(), loadCommitteeFiles()]);
     }
     setLoading(false);
   };
@@ -115,6 +119,12 @@ const ChairPortal = () => {
     setUpdates(data || []);
   };
 
+  const loadCommitteeFiles = async () => {
+    if (!committeeId) return;
+    const { data } = await supabase.from("committee_files").select("*").eq("committee_id", committeeId).order("created_at", { ascending: false }) as any;
+    setCommitteeFiles(data || []);
+  };
+
   const handleLogin = async () => {
     if (!displayName.trim()) { toast.error("Please enter your name"); return; }
     const { data: existing } = await supabase.from("chair_sessions").select("id").eq("committee_id", committeeId!).eq("active", true) as any;
@@ -129,7 +139,7 @@ const ChairPortal = () => {
     if (error) { toast.error(error.message); return; }
     setSessionId((data as any).id);
     setStep("dashboard");
-    await Promise.all([loadDelegates(), loadAgendas(), loadUpdates()]);
+    await Promise.all([loadDelegates(), loadAgendas(), loadUpdates(), loadCommitteeFiles()]);
     toast.success("Logged in as Chair");
   };
 
@@ -143,12 +153,28 @@ const ChairPortal = () => {
 
   const approveDelegate = async (delegateId: string) => {
     await supabase.from("delegates").update({ approved: true } as any).eq("id", delegateId);
+    const del = delegates.find(d => d.id === delegateId);
+    await supabase.rpc("log_audit_event", {
+      p_conference_id: conferenceId, p_committee_id: committeeId,
+      p_action: "delegate_approved", p_actor_type: "chair",
+      p_actor_id: getDeviceId(), p_actor_name: displayName,
+      p_target_table: "delegates", p_target_id: delegateId,
+      p_details: { delegate_name: del?.name, country: del?.country },
+    } as any);
     loadDelegates();
     toast.success("Delegate approved");
   };
 
   const denyDelegate = async (delegateId: string) => {
     await supabase.from("delegates").update({ active: false } as any).eq("id", delegateId);
+    const del = delegates.find(d => d.id === delegateId);
+    await supabase.rpc("log_audit_event", {
+      p_conference_id: conferenceId, p_committee_id: committeeId,
+      p_action: "delegate_denied", p_actor_type: "chair",
+      p_actor_id: getDeviceId(), p_actor_name: displayName,
+      p_target_table: "delegates", p_target_id: delegateId,
+      p_details: { delegate_name: del?.name, country: del?.country },
+    } as any);
     loadDelegates();
     toast.success("Delegate denied");
   };
@@ -443,11 +469,77 @@ const ChairPortal = () => {
         )}
 
         {tab === "files" && (
-          <div className="glass-card rounded-2xl p-5">
+          <div className="glass-card rounded-2xl p-5 space-y-3">
             <h2 className="font-display font-semibold text-foreground text-sm flex items-center gap-2 mb-3">
               <FileText className="w-4 h-4 text-accent" /> Committee Files
             </h2>
-            <p className="text-sm text-muted-foreground text-center py-4">File upload coming soon — storage bucket is ready.</p>
+            <div>
+              <input
+                type="file"
+                id="chair-file-upload"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file || !committeeId || !conferenceId) return;
+                  setUploadingFile(true);
+                  try {
+                    const path = `${conferenceId}/${committeeId}/${Date.now()}_${file.name}`;
+                    const { error: upErr } = await supabase.storage.from("conference-files").upload(path, file);
+                    if (upErr) throw upErr;
+                    const { data: urlData } = supabase.storage.from("conference-files").getPublicUrl(path);
+                    await supabase.from("committee_files").insert({
+                      committee_id: committeeId, conference_id: conferenceId,
+                      uploaded_by: displayName, file_name: file.name, file_url: urlData.publicUrl,
+                    } as any);
+                    await supabase.rpc("log_audit_event", {
+                      p_conference_id: conferenceId, p_committee_id: committeeId,
+                      p_action: "file_upload", p_actor_type: "chair",
+                      p_actor_id: getDeviceId(), p_actor_name: displayName,
+                      p_target_table: "committee_files", p_details: { file_name: file.name },
+                    } as any);
+                    loadCommitteeFiles();
+                    toast.success("File uploaded!");
+                  } catch (err: any) {
+                    toast.error(err.message || "Upload failed");
+                  } finally {
+                    setUploadingFile(false);
+                    e.target.value = "";
+                  }
+                }}
+              />
+              <Button
+                onClick={() => document.getElementById("chair-file-upload")?.click()}
+                disabled={uploadingFile}
+                className="w-full rounded-xl gradient-primary border-0 font-semibold"
+              >
+                {uploadingFile ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
+                Upload File
+              </Button>
+            </div>
+            {committeeFiles.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No files uploaded yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {committeeFiles.map((f: any) => (
+                  <div key={f.id} className="flex items-center justify-between bg-secondary/50 rounded-xl px-4 py-3">
+                    <div>
+                      <a href={f.file_url} target="_blank" rel="noreferrer" className="text-sm text-foreground font-medium hover:text-accent transition-colors">{f.file_name}</a>
+                      <p className="text-xs text-muted-foreground">Uploaded by {f.uploaded_by} · {new Date(f.created_at).toLocaleString()}</p>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        await supabase.from("committee_files").delete().eq("id", f.id);
+                        loadCommitteeFiles();
+                        toast.success("File removed");
+                      }}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

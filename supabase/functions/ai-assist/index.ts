@@ -13,7 +13,7 @@ serve(async (req) => {
     const { type, content, delegations, columns, chairFeedback, delegateName, messages } = body;
 
     // Input validation
-    const validTypes = ["scoring", "gsl_score", "integrity_check", "crisis_analysis", "chat"];
+    const validTypes = ["scoring", "gsl_score", "integrity_check", "crisis_analysis", "chat", "score-command", "gsl-score", "crisis-summary", "ai-check", "analyze", "draft", "score-suggestion"];
     if (!type || typeof type !== "string" || !validTypes.includes(type)) {
       return new Response(JSON.stringify({ error: "Invalid request type" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
