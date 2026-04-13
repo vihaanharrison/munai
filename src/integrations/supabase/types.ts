@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_name: string | null
+          actor_type: string
+          committee_id: string | null
+          conference_id: string | null
+          created_at: string
+          details: Json | null
+          id: string
+          target_id: string | null
+          target_table: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_name?: string | null
+          actor_type: string
+          committee_id?: string | null
+          conference_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_name?: string | null
+          actor_type?: string
+          committee_id?: string | null
+          conference_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Relationships: []
+      }
       blocs: {
         Row: {
           committee_id: string
@@ -1132,6 +1174,20 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      log_audit_event: {
+        Args: {
+          p_action?: string
+          p_actor_id?: string
+          p_actor_name?: string
+          p_actor_type?: string
+          p_committee_id?: string
+          p_conference_id?: string
+          p_details?: Json
+          p_target_id?: string
+          p_target_table?: string
+        }
+        Returns: undefined
       }
       lookup_code: { Args: { input_code: string }; Returns: Json }
     }
