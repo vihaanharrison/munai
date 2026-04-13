@@ -51,6 +51,10 @@ const ChairPortal = () => {
   const [updateBody, setUpdateBody] = useState("");
   const [updates, setUpdates] = useState<any[]>([]);
 
+  // Files
+  const [committeeFiles, setCommitteeFiles] = useState<any[]>([]);
+  const [uploadingFile, setUploadingFile] = useState(false);
+
   // Delegate profile view
   const [selectedDelegate, setSelectedDelegate] = useState<any>(null);
   const [delegateDocs, setDelegateDocs] = useState<any[]>([]);
