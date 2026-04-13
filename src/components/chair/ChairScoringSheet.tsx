@@ -104,6 +104,7 @@ const ChairScoringSheet = ({ committeeId, conferenceId, delegates, committee, on
             p_details: { command: aiCommand, column: result.column, points: result.points, action: result.action, delegate_country: delegate.country },
           } as any);
           onDelegatesUpdated();
+          toast.success(`${result.action === "deduct" ? "Deducted" : "Added"} ${Math.abs(result.points)} ${result.column} ${result.action === "deduct" ? "from" : "to"} ${delegate.country}`);
         }
       } else if (result.message) {
         toast.info(result.message);
