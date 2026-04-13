@@ -32,7 +32,7 @@ const CreateStandaloneCommittee = () => {
     const deviceId = localStorage.getItem("munai_chair_device") || crypto.randomUUID();
     localStorage.setItem("munai_chair_device", deviceId);
 
-    const { data, error } = await supabase.from("standalone_committees" as any).insert({
+    const { data, error } = await supabase.from("standalone_committees").insert({
       name: name.trim(),
       topic: topic.trim() || null,
       delegations: delegations.trim(),
