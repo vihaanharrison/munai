@@ -11,7 +11,7 @@ import munLogo from "@/assets/mun-ai-logo.png";
 const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/";
+  const redirect = searchParams.get("redirect") || "";
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,13 +25,18 @@ const Auth = () => {
     setLoading(true);
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
-        toast.success("Account created! Check your email to confirm.");
+        if (signUpData.session) {
+          toast.success("Account created & signed in!");
+          navigate(`/${redirect}`);
+        } else {
+          toast.success("Account created! Check your email to confirm.");
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
