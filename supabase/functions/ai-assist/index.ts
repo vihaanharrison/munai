@@ -9,7 +9,20 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { type, content, delegations, columns, chairFeedback, delegateName, messages } = await req.json();
+    const body = await req.json();
+    const { type, content, delegations, columns, chairFeedback, delegateName, messages } = body;
+
+    // Input validation
+    const validTypes = ["scoring", "gsl_score", "integrity_check", "crisis_analysis", "chat"];
+    if (!type || typeof type !== "string" || !validTypes.includes(type)) {
+      return new Response(JSON.stringify({ error: "Invalid request type" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    if (content && typeof content !== "string") {
+      return new Response(JSON.stringify({ error: "Invalid content" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    if (content && content.length > 50000) {
+      return new Response(JSON.stringify({ error: "Content too long" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 

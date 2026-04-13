@@ -16,7 +16,9 @@ const SecGenDashboard = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [conference, setConference] = useState<any>(null);
+  const [conferenceCodes, setConferenceCodes] = useState<any>(null);
   const [committees, setCommittees] = useState<any[]>([]);
+  const [committeeChairCodes, setCommitteeChairCodes] = useState<Record<string, string>>({});
   const [pendingMembers, setPendingMembers] = useState<any[]>([]);
   const [newCommittee, setNewCommittee] = useState("");
   const [loading, setLoading] = useState(true);
@@ -27,14 +29,25 @@ const SecGenDashboard = () => {
 
   const loadData = async () => {
     if (!id) return;
-    const [confRes, comRes, membersRes] = await Promise.all([
+    const [confRes, comRes, membersRes, codesRes] = await Promise.all([
       supabase.from("conferences").select("*").eq("id", id).single(),
       supabase.from("committees").select("*").eq("conference_id", id),
       supabase.from("user_roles").select("*").eq("conference_id", id).eq("role", "secretariat" as any),
+      supabase.rpc("get_conference_codes", { conf_id: id }),
     ]);
     setConference(confRes.data);
-    setCommittees((comRes.data as any) || []);
+    setConferenceCodes(codesRes.data);
+    const comms = (comRes.data as any) || [];
+    setCommittees(comms);
     setPendingMembers((membersRes.data as any) || []);
+    
+    // Fetch chair codes for each committee via secure RPC
+    const chairCodesMap: Record<string, string> = {};
+    await Promise.all(comms.map(async (c: any) => {
+      const { data } = await supabase.rpc("get_committee_chair_code", { comm_id: c.id });
+      if (data) chairCodesMap[c.id] = data as string;
+    }));
+    setCommitteeChairCodes(chairCodesMap);
     setLoading(false);
   };
 
@@ -125,9 +138,9 @@ const SecGenDashboard = () => {
             <Settings className="w-4 h-4 text-accent" /> Conference Codes
           </h2>
           {[
-            { label: "Public Link Code", code: conference.public_code },
-            { label: "SecGen Code", code: conference.secgen_code },
-            { label: "Secretariat Code", code: conference.secretariat_code },
+            { label: "Public Link Code", code: conferenceCodes?.public_code || "..." },
+            { label: "SecGen Code", code: conferenceCodes?.secgen_code || "..." },
+            { label: "Secretariat Code", code: conferenceCodes?.secretariat_code || "..." },
           ].map(({ label, code }) => (
             <div key={label} className="flex items-center justify-between bg-secondary/50 rounded-xl px-4 py-2.5">
               <div>
@@ -156,8 +169,8 @@ const SecGenDashboard = () => {
               <div className="flex items-center justify-between">
                 <span className="font-medium text-foreground">{c.name}</span>
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs text-muted-foreground">{c.chair_code}</span>
-                  <button onClick={() => copyCode(c.chair_code, "Chair code")} className="text-muted-foreground hover:text-accent"><Copy className="w-3.5 h-3.5" /></button>
+                  <span className="font-mono text-xs text-muted-foreground">{committeeChairCodes[c.id] || "..."}</span>
+                  <button onClick={() => copyCode(committeeChairCodes[c.id] || "", "Chair code")} className="text-muted-foreground hover:text-accent"><Copy className="w-3.5 h-3.5" /></button>
                   <button onClick={() => { setEditingDelegations(editingDelegations === c.id ? null : c.id); setDelegationsText(c.delegations || ""); }} className="text-muted-foreground hover:text-accent"><Edit className="w-3.5 h-3.5" /></button>
                 </div>
               </div>
