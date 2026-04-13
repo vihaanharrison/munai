@@ -143,12 +143,28 @@ const ChairPortal = () => {
 
   const approveDelegate = async (delegateId: string) => {
     await supabase.from("delegates").update({ approved: true } as any).eq("id", delegateId);
+    const del = delegates.find(d => d.id === delegateId);
+    await supabase.rpc("log_audit_event", {
+      p_conference_id: conferenceId, p_committee_id: committeeId,
+      p_action: "delegate_approved", p_actor_type: "chair",
+      p_actor_id: getDeviceId(), p_actor_name: displayName,
+      p_target_table: "delegates", p_target_id: delegateId,
+      p_details: { delegate_name: del?.name, country: del?.country },
+    } as any);
     loadDelegates();
     toast.success("Delegate approved");
   };
 
   const denyDelegate = async (delegateId: string) => {
     await supabase.from("delegates").update({ active: false } as any).eq("id", delegateId);
+    const del = delegates.find(d => d.id === delegateId);
+    await supabase.rpc("log_audit_event", {
+      p_conference_id: conferenceId, p_committee_id: committeeId,
+      p_action: "delegate_denied", p_actor_type: "chair",
+      p_actor_id: getDeviceId(), p_actor_name: displayName,
+      p_target_table: "delegates", p_target_id: delegateId,
+      p_details: { delegate_name: del?.name, country: del?.country },
+    } as any);
     loadDelegates();
     toast.success("Delegate denied");
   };
