@@ -1123,6 +1123,8 @@ export type Database = {
     }
     Functions: {
       generate_code: { Args: { length?: number }; Returns: string }
+      get_committee_chair_code: { Args: { comm_id: string }; Returns: string }
+      get_conference_codes: { Args: { conf_id: string }; Returns: Json }
       has_role: {
         Args: {
           _conference_id: string
