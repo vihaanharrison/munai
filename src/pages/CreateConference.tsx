@@ -75,10 +75,10 @@ const CreateConference = () => {
       await supabase.from("user_roles").insert({
         user_id: session.user.id,
         conference_id: (data as any).id,
-        role: "secgen",
+        role: "secgen" as const,
         display_name: session.user.email,
         approved: true,
-      } as any);
+      });
 
       toast.success("Conference created!");
       navigate(`/secgen/${(data as any).id}`);
