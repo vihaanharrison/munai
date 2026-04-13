@@ -72,7 +72,7 @@ const ChairPortal = () => {
     if (!conferenceId || !committeeId) return;
     const [comRes, confRes] = await Promise.all([
       supabase.from("committees").select("*").eq("id", committeeId).single(),
-      supabase.from("conferences").select("*").eq("id", conferenceId).single(),
+      supabase.from("conferences_public").select("*").eq("id", conferenceId).single(),
     ]);
     setCommittee(comRes.data);
     setConference(confRes.data);

@@ -88,7 +88,7 @@ const DelegateRegister = () => {
   const loadData = async () => {
     if (!conferenceId) return;
     const [confRes, comRes] = await Promise.all([
-      supabase.from("conferences").select("*").eq("id", conferenceId).single(),
+      supabase.from("conferences_public").select("*").eq("id", conferenceId).single(),
       supabase.from("committees").select("*").eq("conference_id", conferenceId),
     ]);
     setConference(confRes.data);
