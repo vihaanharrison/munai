@@ -18,7 +18,7 @@ const ConferencePublic = () => {
   useEffect(() => {
     if (!id) return;
     Promise.all([
-      supabase.from("conferences").select("*").eq("id", id).single(),
+      supabase.from("conferences_public").select("*").eq("id", id).single(),
       supabase.from("committees").select("*").eq("conference_id", id),
       supabase.from("schedule_sessions").select("*").eq("conference_id", id).order("day_date").order("start_time") as any,
       supabase.from("conference_updates").select("*").eq("conference_id", id).is("committee_id", null).order("created_at", { ascending: false }).limit(5) as any,

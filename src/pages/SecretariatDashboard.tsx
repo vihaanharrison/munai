@@ -62,7 +62,7 @@ const SecretariatDashboard = () => {
     if (!user) { navigate("/auth?redirect=secretariat/" + id); return; }
 
     const [confRes, comRes, roleRes] = await Promise.all([
-      supabase.from("conferences").select("*").eq("id", id).single(),
+      supabase.from("conferences_public").select("*").eq("id", id).single(),
       supabase.from("committees").select("*").eq("conference_id", id),
       supabase.from("user_roles").select("*").eq("conference_id", id).eq("user_id", user.id).eq("role", "secretariat" as any).maybeSingle(),
     ]);
