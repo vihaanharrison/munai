@@ -90,7 +90,7 @@ const CreateConference = () => {
   };
 
   return (
-    <div className="min-h-screen gradient-hero p-4">
+    <div className="min-h-screen gradient-hero p-4 pr-20">
       <div className="max-w-lg mx-auto pt-8 animate-fade-in">
         <button
           onClick={() => navigate("/")}

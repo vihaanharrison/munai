@@ -32,15 +32,15 @@ const ConferencePublic = () => {
   }, [id]);
 
   if (loading) {
-    return <div className="min-h-screen bg-[#efeeea] flex items-center justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>;
+    return <div className="min-h-screen gradient-hero flex items-center justify-center pr-20"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>;
   }
 
   if (!conference) {
-    return <div className="min-h-screen bg-[#efeeea] flex items-center justify-center"><p className="text-muted-foreground">Conference not found</p></div>;
+    return <div className="min-h-screen gradient-hero flex items-center justify-center pr-20"><p className="text-muted-foreground">Conference not found</p></div>;
   }
 
   return (
-    <div className="min-h-screen bg-[#efeeea] p-4">
+    <div className="min-h-screen gradient-hero p-4 pr-20">
       <div className="max-w-2xl mx-auto pt-8 animate-fade-in space-y-4">
         {conference.banner_url && (
           <img src={conference.banner_url} alt="Banner" className="w-full h-48 object-cover rounded-2xl" />
