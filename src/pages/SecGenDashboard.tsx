@@ -103,15 +103,15 @@ const SecGenDashboard = () => {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-[#efeeea] flex items-center justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>;
+    return <div className="min-h-screen gradient-hero flex items-center justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>;
   }
 
   if (!conference) {
-    return <div className="min-h-screen bg-[#efeeea] flex items-center justify-center"><p className="text-muted-foreground">Conference not found</p></div>;
+    return <div className="min-h-screen gradient-hero flex items-center justify-center"><p className="text-muted-foreground">Conference not found</p></div>;
   }
 
   return (
-    <div className="min-h-screen bg-[#efeeea] p-4">
+    <div className="min-h-screen gradient-hero p-4">
       <div className="max-w-3xl mx-auto pt-6 animate-fade-in space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">

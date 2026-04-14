@@ -3,8 +3,11 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import GlobalNav from "@/components/GlobalNav";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Dashboard from "./pages/Dashboard";
+import UpcomingEvents from "./pages/UpcomingEvents";
 import CreateConference from "./pages/CreateConference";
 import CreateStandaloneCommittee from "./pages/CreateStandaloneCommittee";
 import JoinByCode from "./pages/JoinByCode";
@@ -27,9 +30,12 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <GlobalNav />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/events" element={<UpcomingEvents />} />
           <Route path="/create-conference" element={<CreateConference />} />
           <Route path="/create-standalone" element={<CreateStandaloneCommittee />} />
           <Route path="/join/:code" element={<JoinByCode />} />
