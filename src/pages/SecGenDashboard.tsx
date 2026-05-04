@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Copy, Plus, Users, Settings, LogOut, Loader2, Trash2, Edit } from "lucide-react";
+import { Copy, Plus, Users, Settings, LogOut, Loader2, Trash2, Edit, Power } from "lucide-react";
 import munLogo from "@/assets/mun-ai-logo.png";
 import ScheduleManager from "@/components/ScheduleManager";
 import AIAssistant from "@/components/AIAssistant";
