@@ -244,6 +244,46 @@ const UpcomingEvents = () => {
             )}
           </div>
         ))}
+
+        {/* Discoverable Profiles */}
+        {profiles.length > 0 && (
+          <div className="pt-6">
+            <h2 className="font-display text-lg font-bold text-foreground mb-3 flex items-center gap-2">
+              <UserCircle className="w-5 h-5 text-accent" /> Community
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {profiles.map((p: any) => (
+                <div key={p.id} className="glass-card rounded-2xl p-4 hover-lift">
+                  <div className="flex items-start gap-3">
+                    {p.avatar_url ? (
+                      <img src={p.avatar_url} alt="" className="w-12 h-12 rounded-xl object-cover" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <UserCircle className="w-6 h-6 text-primary" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-display font-semibold text-foreground text-sm truncate">{p.display_name || "Anonymous"}</p>
+                      {p.mun_experience && <p className="text-xs text-muted-foreground">{p.mun_experience}</p>}
+                      {p.bio && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{p.bio}</p>}
+                      {Array.isArray(p.awards) && p.awards.length > 0 && (
+                        <p className="text-xs text-accent mt-1.5 flex items-center gap-1">
+                          <Trophy className="w-3 h-3" /> {p.awards.length} award{p.awards.length === 1 ? "" : "s"}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!user && (
+          <div className="glass-card rounded-2xl p-4 text-center text-xs text-muted-foreground">
+            Sign in to see community members and register for events.
+          </div>
+        )}
       </div>
     </div>
   );
