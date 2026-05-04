@@ -526,6 +526,7 @@ export type Database = {
           created_at: string | null
           email: string | null
           end_date: string
+          ended_at: string | null
           id: string
           location: string | null
           logo_url: string | null
@@ -546,6 +547,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           end_date: string
+          ended_at?: string | null
           id?: string
           location?: string | null
           logo_url?: string | null
@@ -566,6 +568,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           end_date?: string
+          ended_at?: string | null
           id?: string
           location?: string | null
           logo_url?: string | null
@@ -1031,6 +1034,60 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          awards: Json | null
+          awards_raw: string | null
+          bio: string | null
+          chair_eligible: boolean | null
+          conferences_attended: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string
+          mun_experience: string | null
+          preferred_role: string | null
+          socials: Json | null
+          updated_at: string | null
+          user_id: string
+          visible_in_discover: boolean | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          awards?: Json | null
+          awards_raw?: string | null
+          bio?: string | null
+          chair_eligible?: boolean | null
+          conferences_attended?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          mun_experience?: string | null
+          preferred_role?: string | null
+          socials?: Json | null
+          updated_at?: string | null
+          user_id: string
+          visible_in_discover?: boolean | null
+        }
+        Update: {
+          avatar_url?: string | null
+          awards?: Json | null
+          awards_raw?: string | null
+          bio?: string | null
+          chair_eligible?: boolean | null
+          conferences_attended?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          mun_experience?: string | null
+          preferred_role?: string | null
+          socials?: Json | null
+          updated_at?: string | null
+          user_id?: string
+          visible_in_discover?: boolean | null
+        }
+        Relationships: []
+      }
       schedule_sessions: {
         Row: {
           conference_id: string
@@ -1206,6 +1263,7 @@ export type Database = {
           created_by_device_id: string | null
           crisis_enabled: boolean | null
           delegations: string | null
+          ended_at: string | null
           id: string
           name: string
           scoring_columns: Json | null
@@ -1218,6 +1276,7 @@ export type Database = {
           created_by_device_id?: string | null
           crisis_enabled?: boolean | null
           delegations?: string | null
+          ended_at?: string | null
           id?: string
           name: string
           scoring_columns?: Json | null
@@ -1230,6 +1289,7 @@ export type Database = {
           created_by_device_id?: string | null
           crisis_enabled?: boolean | null
           delegations?: string | null
+          ended_at?: string | null
           id?: string
           name?: string
           scoring_columns?: Json | null

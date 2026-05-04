@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus, Gavel, LogOut, Loader2, Calendar, ArrowRight } from "lucide-react";
+import { Plus, Gavel, LogOut, Loader2, Calendar, ArrowRight, UserCircle } from "lucide-react";
 import munLogo from "@/assets/mun-ai-logo.png";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
@@ -60,14 +60,19 @@ const Dashboard = () => {
               <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
           </div>
-          <ConfirmDialog
-            trigger={<Button variant="ghost" size="icon" className="rounded-xl" title="Sign Out"><LogOut className="w-5 h-5" /></Button>}
-            title="Sign Out"
-            description="Are you sure you want to sign out?"
-            onConfirm={handleSignOut}
-            confirmLabel="Sign Out"
-            variant="destructive"
-          />
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="rounded-xl" title="Edit Profile" onClick={() => navigate("/profile")}>
+              <UserCircle className="w-5 h-5" />
+            </Button>
+            <ConfirmDialog
+              trigger={<Button variant="ghost" size="icon" className="rounded-xl" title="Exit"><LogOut className="w-5 h-5" /></Button>}
+              title="Exit"
+              description="You'll be signed out of this device. Your conferences and committees stay safe and will be here when you return."
+              onConfirm={handleSignOut}
+              confirmLabel="Exit"
+              variant="destructive"
+            />
+          </div>
         </div>
 
         {/* Quick Actions */}

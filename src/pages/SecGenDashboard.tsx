@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Copy, Plus, Users, Settings, LogOut, Loader2, Trash2, Edit } from "lucide-react";
+import { Copy, Plus, Users, Settings, LogOut, Loader2, Trash2, Edit, Power } from "lucide-react";
 import munLogo from "@/assets/mun-ai-logo.png";
 import ScheduleManager from "@/components/ScheduleManager";
 import AIAssistant from "@/components/AIAssistant";
@@ -122,14 +122,46 @@ const SecGenDashboard = () => {
               <p className="text-sm text-muted-foreground">Secretary General Dashboard</p>
             </div>
           </div>
-          <ConfirmDialog
-            trigger={<Button variant="ghost" size="icon" className="rounded-xl" title="Sign Out"><LogOut className="w-5 h-5" /></Button>}
-            title="Sign Out"
-            description="Are you sure you want to sign out of the SecGen dashboard?"
-            onConfirm={handleSignOut}
-            confirmLabel="Sign Out"
-            variant="destructive"
-          />
+          <div className="flex items-center gap-2">
+            {(() => {
+              const start = conference.start_date ? new Date(conference.start_date) : null;
+              const day3 = start ? new Date(start.getTime() + 2 * 86400000) : null;
+              const canEnd = !!day3 && new Date() >= day3 && !conference.ended_at;
+              const ended = !!conference.ended_at;
+              if (ended) {
+                const endsAt = new Date(new Date(conference.ended_at).getTime() + 48 * 3600000);
+                return (
+                  <span className="text-xs bg-accent/10 text-accent px-3 py-1.5 rounded-lg" title="Archive download window">
+                    Archive open · closes {endsAt.toLocaleDateString()}
+                  </span>
+                );
+              }
+              if (canEnd) {
+                return (
+                  <ConfirmDialog
+                    trigger={<Button variant="ghost" size="icon" className="rounded-xl" title="End Conference"><Power className="w-5 h-5 text-destructive" /></Button>}
+                    title="End Conference"
+                    description="This opens the 48-hour archive window so participants can download all conference data. Data is permanently deleted afterwards. This cannot be undone."
+                    onConfirm={async () => {
+                      const { error } = await supabase.from("conferences").update({ ended_at: new Date().toISOString() } as any).eq("id", conference.id);
+                      if (error) toast.error(error.message); else { toast.success("Conference ended — 48h archive window open"); loadData(); }
+                    }}
+                    confirmLabel="End Conference"
+                    variant="destructive"
+                  />
+                );
+              }
+              return null;
+            })()}
+            <ConfirmDialog
+              trigger={<Button variant="ghost" size="icon" className="rounded-xl" title="Exit"><LogOut className="w-5 h-5" /></Button>}
+              title="Exit"
+              description="You'll be signed out of this device. The conference and all its data stay safe and will be here when you return."
+              onConfirm={handleSignOut}
+              confirmLabel="Exit"
+              variant="destructive"
+            />
+          </div>
         </div>
 
         {/* Codes */}

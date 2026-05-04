@@ -183,7 +183,7 @@ const SecretariatDashboard = () => {
           <img src={munLogo} alt="MUN AI" className="h-12 mx-auto mb-4" />
           <h2 className="font-display font-bold text-foreground text-lg mb-2">Pending Approval</h2>
           <p className="text-sm text-muted-foreground">Your request to join as secretariat is pending SecGen approval.</p>
-          <Button variant="ghost" onClick={handleSignOut} className="mt-4 rounded-xl"><LogOut className="w-4 h-4 mr-2" /> Sign Out</Button>
+          <Button variant="ghost" onClick={handleSignOut} className="mt-4 rounded-xl" title="Exit"><LogOut className="w-4 h-4 mr-2" /> Exit</Button>
         </div>
       </div>
     );
@@ -209,7 +209,7 @@ const SecretariatDashboard = () => {
               <p className="text-xs text-muted-foreground">Secretariat · {(role as any)?.display_name}</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={handleSignOut} className="rounded-xl"><LogOut className="w-5 h-5" /></Button>
+          <Button variant="ghost" size="icon" onClick={handleSignOut} className="rounded-xl" title="Exit"><LogOut className="w-5 h-5" /></Button>
         </div>
       </div>
 
