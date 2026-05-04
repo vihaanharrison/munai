@@ -7,6 +7,7 @@ import GlobalNav from "@/components/GlobalNav";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
 import UpcomingEvents from "./pages/UpcomingEvents";
 import CreateConference from "./pages/CreateConference";
 import CreateStandaloneCommittee from "./pages/CreateStandaloneCommittee";
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/events" element={<UpcomingEvents />} />
           <Route path="/create-conference" element={<CreateConference />} />
           <Route path="/create-standalone" element={<CreateStandaloneCommittee />} />
