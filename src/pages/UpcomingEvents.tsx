@@ -109,8 +109,8 @@ const UpcomingEvents = () => {
         <div className="flex items-center gap-3 mb-6">
           <img src={munLogo} alt="MUN AI" className="h-12 object-contain" />
           <div>
-            <h1 className="font-display text-xl font-bold text-foreground">Upcoming Events</h1>
-            <p className="text-xs text-muted-foreground">Browse and register for MUN conferences</p>
+            <h1 className="font-display text-xl font-bold text-foreground">Discover</h1>
+            <p className="text-xs text-muted-foreground">Browse upcoming conferences and community profiles</p>
           </div>
         </div>
 
