@@ -1,12 +1,14 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Globe, UserCircle, LayoutDashboard, CalendarDays } from "lucide-react";
+import { Globe, UserCircle, LayoutDashboard, Compass, Info, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
   { key: "join", label: "Join", icon: Globe, path: "/" },
   { key: "auth", label: "Account", icon: UserCircle, path: "/auth" },
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-  { key: "events", label: "Events", icon: CalendarDays, path: "/events" },
+  { key: "events", label: "Discover", icon: Compass, path: "/events" },
+  { key: "about", label: "About", icon: Info, path: "/about" },
+  { key: "rop", label: "ROP", icon: BookOpen, path: "/hmun-rop" },
 ];
 
 const GlobalNav = () => {

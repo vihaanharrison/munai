@@ -83,15 +83,7 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="text-center py-5 space-y-2">
-        <div className="flex items-center justify-center gap-4">
-          <button onClick={() => navigate("/about")} className="text-xs text-muted-foreground hover:text-accent transition-smooth flex items-center gap-1">
-            <Info className="w-3 h-3" /> About
-          </button>
-          <button onClick={() => navigate("/hmun-rop")} className="text-xs text-muted-foreground hover:text-accent transition-smooth flex items-center gap-1">
-            <BookOpen className="w-3 h-3" /> HMUN ROP
-          </button>
-        </div>
+      <footer className="text-center py-5">
         <p className="text-xs text-muted-foreground">Powered by AI · Built for diplomacy</p>
       </footer>
     </div>
