@@ -144,7 +144,7 @@ const SecGenDashboard = () => {
                     description="This opens the 48-hour archive window so participants can download all conference data. Data is permanently deleted afterwards. This cannot be undone."
                     onConfirm={async () => {
                       const { error } = await supabase.from("conferences").update({ ended_at: new Date().toISOString() } as any).eq("id", conference.id);
-                      if (error) toast.error(error.message); else { toast.success("Conference ended — 48h archive window open"); loadConference(); }
+                      if (error) toast.error(error.message); else { toast.success("Conference ended — 48h archive window open"); loadData(); }
                     }}
                     confirmLabel="End Conference"
                     variant="destructive"
