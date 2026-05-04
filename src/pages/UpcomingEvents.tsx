@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, CalendarDays, MapPin, Mail, ExternalLink, Users } from "lucide-react";
+import { Loader2, CalendarDays, MapPin, Mail, ExternalLink, Users, Trophy, UserCircle } from "lucide-react";
 import munLogo from "@/assets/mun-ai-logo.png";
 import { toast } from "sonner";
 
@@ -19,6 +19,7 @@ const UpcomingEvents = () => {
   const [regForm, setRegForm] = useState({ name: "", email: "", responses: {} as Record<string, string> });
   const [submitting, setSubmitting] = useState(false);
   const [existingRegs, setExistingRegs] = useState<Set<string>>(new Set());
+  const [profiles, setProfiles] = useState<any[]>([]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -59,6 +60,16 @@ const UpcomingEvents = () => {
         .select("conference_id")
         .eq("user_id", userId);
       setExistingRegs(new Set((regs || []).map((r: any) => r.conference_id)));
+    }
+
+    // Load discoverable profiles (only visible if signed in)
+    if (userId) {
+      const { data: profs } = await (supabase
+        .from("profiles" as any)
+        .select("id, display_name, bio, avatar_url, mun_experience, awards, preferred_role, socials")
+        .eq("visible_in_discover", true)
+        .limit(50) as any);
+      setProfiles((profs as any) || []);
     }
 
     setLoading(false);
