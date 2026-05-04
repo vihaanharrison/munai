@@ -103,18 +103,30 @@ const StandaloneChairPortal = () => {
   };
 
   const handleLogin = async () => {
-    if (!displayName.trim()) { toast.error("Please enter your name"); return; }
-    const { data: existing } = await supabase.from("chair_sessions").select("id").eq("committee_id", id!).eq("active", true) as any;
-    if (existing && existing.length >= 3) { toast.error("Maximum 3 chairs per committee reached"); return; }
+    const trimmedName = displayName.trim();
+    if (!trimmedName) { toast.error("Please enter your name"); return; }
+    if (trimmedName.length > 80) { toast.error("Name is too long (max 80 characters)"); return; }
+    if (!id) { toast.error("Committee not loaded yet"); return; }
+    if (!committee) { toast.error("Committee not found"); return; }
+
+    const { count } = await supabase
+      .from("chair_sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("committee_id", id)
+      .eq("active", true) as any;
+    if ((count ?? 0) >= 3) { toast.error("Maximum 3 chairs per committee reached"); return; }
 
     const deviceId = getDeviceId();
-    // Use a placeholder conference_id for standalone
+    // Standalone committees don't have a parent conference — reuse the committee id as conference_id sentinel
     const { data, error } = await supabase.from("chair_sessions").insert({
-      device_id: deviceId, conference_id: id!, committee_id: id!,
-      display_name: displayName.trim(), active: true,
+      device_id: deviceId,
+      conference_id: id,
+      committee_id: id,
+      display_name: trimmedName,
+      active: true,
     } as any).select().single();
 
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(`Could not start chair session: ${error.message}`); return; }
     setSessionId((data as any).id);
     setStep("dashboard");
     await Promise.all([loadDelegates(), loadAgendas(), loadUpdates()]);
