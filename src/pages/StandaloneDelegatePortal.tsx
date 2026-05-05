@@ -172,18 +172,24 @@ const StandaloneDelegatePortal = () => {
           </div>
           <div className="glass-card rounded-2xl p-6 space-y-4">
             <div><Label className="text-sm font-medium">Full Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" className="rounded-xl mt-1.5" /></div>
-            <div>
-              <Label className="text-sm font-medium">Delegation</Label>
-              {delegationList.length > 0 ? (
-                <div className="grid grid-cols-2 gap-1.5 mt-1.5 max-h-48 overflow-y-auto">
-                  {delegationList.map((d: string) => {
-                    const taken = takenDelegations.includes(d);
-                    return <button key={d} disabled={taken} onClick={() => setCountry(d)} className={`text-xs px-3 py-2 rounded-lg text-left transition-colors ${taken ? "bg-secondary/30 text-muted-foreground/50 cursor-not-allowed line-through" : country === d ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-foreground hover:bg-secondary"}`}>{d}</button>;
-                  })}
+            {delegationList.length === 0 ? (
+              <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-3 text-xs text-destructive">
+                Committee not yet open — the chair must publish the delegation matrix first. Check back shortly.
+              </div>
+            ) : (
+              <>
+                <div>
+                  <Label className="text-sm font-medium">Delegation</Label>
+                  <div className="grid grid-cols-2 gap-1.5 mt-1.5 max-h-48 overflow-y-auto">
+                    {delegationList.map((d: string) => {
+                      const taken = takenDelegations.includes(d);
+                      return <button key={d} disabled={taken} onClick={() => setCountry(d)} className={`text-xs px-3 py-2 rounded-lg text-left transition-colors ${taken ? "bg-secondary/30 text-muted-foreground/50 cursor-not-allowed line-through" : country === d ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-foreground hover:bg-secondary"}`}>{d}</button>;
+                    })}
+                  </div>
                 </div>
-              ) : <Input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="e.g. United States" className="rounded-xl mt-1.5" />}
-            </div>
-            <Button onClick={handleRegister} className="w-full rounded-xl h-11 gradient-primary border-0 font-semibold">Register</Button>
+                <Button onClick={handleRegister} disabled={!name.trim() || !country} className="w-full rounded-xl h-11 gradient-primary border-0 font-semibold">Register</Button>
+              </>
+            )}
           </div>
         </div>
       </div>
