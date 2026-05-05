@@ -250,13 +250,18 @@ const StandaloneChairPortal = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {!isCrisisCommittee && (
+              <Button variant={committee.crisis_mode_active ? "destructive" : "ghost"} size="sm" onClick={toggleCrisisMode} className="rounded-xl text-xs" title={committee.crisis_mode_active ? "Disable crisis mode" : "Enable crisis mode"}>
+                <AlertTriangle className="w-4 h-4 mr-1" /> {committee.crisis_mode_active ? "Crisis On" : "Crisis"}
+              </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={() => navigate("/hmun-rop")} className="rounded-xl" title="HMUN ROP"><BookOpen className="w-4 h-4" /></Button>
             <ConfirmDialog
-              trigger={<Button variant="ghost" size="icon" className="rounded-xl" title="End Session"><LogOut className="w-5 h-5" /></Button>}
-              title="End Session"
-              description="Are you sure you want to end your chair session? You will be returned to the homepage."
+              trigger={<Button variant="ghost" size="icon" className="rounded-xl" title="Exit (you can re-enter anytime)"><LogOut className="w-5 h-5" /></Button>}
+              title="Exit Session"
+              description="You'll be returned to the homepage. The committee remains active and you can re-enter anytime with your code."
               onConfirm={handleEndSession}
-              confirmLabel="End Session"
+              confirmLabel="Exit"
               variant="destructive"
             />
           </div>
