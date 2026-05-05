@@ -279,6 +279,7 @@ const DelegateRegister = () => {
     const delegationList = selectedCommittee?.delegations
       ? selectedCommittee.delegations.split(",").map((d: string) => d.trim()).filter(Boolean)
       : [];
+    const setupIncomplete = selectedCommittee && delegationList.length === 0;
 
     return (
       <div className="min-h-screen bg-[#efeeea] flex items-center justify-center p-4">
