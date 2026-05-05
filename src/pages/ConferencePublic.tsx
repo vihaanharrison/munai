@@ -53,6 +53,17 @@ const ConferencePublic = () => {
           </div>
         </div>
 
+        {conference.ended_at && (() => {
+          const endsAt = new Date(new Date(conference.ended_at).getTime() + 48 * 3600000);
+          const hoursLeft = Math.max(0, Math.floor((endsAt.getTime() - Date.now()) / 3600000));
+          return (
+            <div className="glass-card rounded-2xl p-4 border border-accent/30">
+              <p className="text-xs uppercase tracking-wide text-accent font-semibold">Conference ended</p>
+              <p className="text-sm text-foreground mt-1">Archive download window closes in <strong>{hoursLeft}h</strong> ({endsAt.toLocaleString()}). Data is permanently purged afterwards.</p>
+            </div>
+          );
+        })()}
+
         {/* Live Clock */}
         {id && <LiveConferenceClock conferenceId={id} />}
 

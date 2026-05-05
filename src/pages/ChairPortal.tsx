@@ -242,6 +242,7 @@ const ChairPortal = () => {
   const pendingDelegates = delegates.filter((d) => !d.approved && d.active);
   const approvedDelegates = delegates.filter((d) => d.approved);
 
+  const isCrisis = (committee?.committee_type === "crisis") || !!committee?.crisis_enabled;
   const tabItems: { key: Tab; label: string; icon: any; badge?: number }[] = [
     { key: "delegates", label: "Delegates", icon: Users, badge: pendingCount },
     { key: "speakers", label: "Speakers", icon: Mic },
@@ -250,7 +251,7 @@ const ChairPortal = () => {
     { key: "blocs", label: "Blocs", icon: Shield },
     { key: "agendas", label: "Agendas", icon: BookOpen },
     { key: "updates", label: "Updates", icon: Bell },
-    { key: "crisis", label: "Crisis", icon: AlertTriangle },
+    ...(isCrisis ? [{ key: "crisis" as Tab, label: "Crisis", icon: AlertTriangle }] : []),
     { key: "files", label: "Files", icon: FileText },
     { key: "ai", label: "AI", icon: null },
   ];
