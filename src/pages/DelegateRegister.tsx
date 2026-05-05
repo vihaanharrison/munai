@@ -413,8 +413,9 @@ const DelegateRegister = () => {
                 <MessageSquare className="w-4 h-4 text-accent" /> Submit Point of Information
               </h2>
               <Select value={poiTarget} onValueChange={setPoiTarget}>
-                <SelectTrigger className="rounded-xl"><SelectValue placeholder="To delegate..." /></SelectTrigger>
+                <SelectTrigger className="rounded-xl"><SelectValue placeholder="To delegate or chair..." /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="__chair__">📣 Chair (direct)</SelectItem>
                   {committeeDelegates.filter((d) => d.id !== delegate?.id).map((d) => (
                     <SelectItem key={d.id} value={d.id}>{d.country} — {d.name}</SelectItem>
                   ))}
