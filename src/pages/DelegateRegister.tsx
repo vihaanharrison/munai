@@ -228,10 +228,13 @@ const DelegateRegister = () => {
   };
 
   const submitPOI = async () => {
-    if (!poiContent.trim() || !poiTarget || !delegate) { toast.error("Select a delegate and write your POI"); return; }
+    if (!poiContent.trim() || !poiTarget || !delegate) { toast.error("Select a recipient and write your POI"); return; }
+    const toChair = poiTarget === "__chair__";
     await supabase.from("pois").insert({
       committee_id: delegate.committee_id, conference_id: conferenceId!,
-      from_delegate_id: delegate.id, to_delegate_id: poiTarget,
+      from_delegate_id: delegate.id,
+      to_delegate_id: toChair ? delegate.id : poiTarget,
+      to_chair: toChair,
       content: poiContent.trim(), status: "pending",
     } as any);
     setPoiContent("");
