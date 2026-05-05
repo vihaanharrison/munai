@@ -330,6 +330,7 @@ export type Database = {
       committees: {
         Row: {
           chair_code: string | null
+          committee_type: string
           conference_id: string
           created_at: string | null
           crisis_enabled: boolean | null
@@ -341,6 +342,7 @@ export type Database = {
         }
         Insert: {
           chair_code?: string | null
+          committee_type?: string
           conference_id: string
           created_at?: string | null
           crisis_enabled?: boolean | null
@@ -352,6 +354,7 @@ export type Database = {
         }
         Update: {
           chair_code?: string | null
+          committee_type?: string
           conference_id?: string
           created_at?: string | null
           crisis_enabled?: boolean | null
@@ -1259,6 +1262,7 @@ export type Database = {
         Row: {
           chair_code: string
           committee_code: string
+          committee_type: string
           created_at: string | null
           created_by_device_id: string | null
           crisis_enabled: boolean | null
@@ -1272,6 +1276,7 @@ export type Database = {
         Insert: {
           chair_code: string
           committee_code: string
+          committee_type?: string
           created_at?: string | null
           created_by_device_id?: string | null
           crisis_enabled?: boolean | null
@@ -1285,6 +1290,7 @@ export type Database = {
         Update: {
           chair_code?: string
           committee_code?: string
+          committee_type?: string
           created_at?: string | null
           created_by_device_id?: string | null
           crisis_enabled?: boolean | null
