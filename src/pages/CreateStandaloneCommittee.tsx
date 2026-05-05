@@ -21,6 +21,7 @@ const CreateStandaloneCommittee = () => {
   const [name, setName] = useState("");
   const [topic, setTopic] = useState("");
   const [delegations, setDelegations] = useState("");
+  const [committeeType, setCommitteeType] = useState<"general" | "specialized" | "crisis">("general");
   const [created, setCreated] = useState<{ committeeCode: string; chairCode: string; id: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -39,7 +40,9 @@ const CreateStandaloneCommittee = () => {
       committee_code: committeeCode,
       chair_code: chairCode,
       created_by_device_id: deviceId,
-    }).select().single();
+      committee_type: committeeType,
+      crisis_enabled: committeeType === "crisis",
+    } as any).select().single();
 
     if (error) { toast.error(error.message); setLoading(false); return; }
     setCreated({ committeeCode, chairCode, id: (data as any).id });
@@ -98,6 +101,20 @@ const CreateStandaloneCommittee = () => {
           <div>
             <Label className="text-sm font-medium">Committee Name *</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. DISEC, Crisis Cabinet" className="rounded-xl mt-1.5" />
+          </div>
+          <div>
+            <Label className="text-sm font-medium">Committee Type *</Label>
+            <div className="grid grid-cols-3 gap-2 mt-1.5">
+              {(["general", "specialized", "crisis"] as const).map((t) => (
+                <button key={t} type="button" onClick={() => setCommitteeType(t)}
+                  className={`text-xs font-medium py-2 rounded-xl transition-colors capitalize ${committeeType === t ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-muted-foreground hover:bg-secondary"}`}>
+                  {t}
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {committeeType === "crisis" ? "Crisis tools, triggers & timeline enabled." : committeeType === "specialized" ? "Smaller committee with deeper scoring." : "Standard GA-style flow."}
+            </p>
           </div>
           <div>
             <Label className="text-sm font-medium">Topic (optional)</Label>
