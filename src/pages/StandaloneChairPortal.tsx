@@ -215,6 +215,7 @@ const StandaloneChairPortal = () => {
   const pendingDelegates = delegates.filter((d) => !d.approved && d.active);
   const approvedDelegates = delegates.filter((d) => d.approved);
 
+  const isCrisis = (committee?.committee_type === "crisis") || !!committee?.crisis_enabled;
   const tabItems: { key: Tab; label: string; badge?: number }[] = [
     { key: "delegates", label: "Delegates", badge: pendingCount },
     { key: "speakers", label: "Speakers" },
@@ -223,7 +224,7 @@ const StandaloneChairPortal = () => {
     { key: "blocs", label: "Blocs" },
     { key: "agendas", label: "Agendas" },
     { key: "updates", label: "Updates" },
-    { key: "crisis", label: "Crisis" },
+    ...(isCrisis ? [{ key: "crisis" as Tab, label: "Crisis" }] : []),
     { key: "files", label: "Files" },
     { key: "ai", label: "AI" },
   ];
