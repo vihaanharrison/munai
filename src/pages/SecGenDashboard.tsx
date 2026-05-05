@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Copy, Plus, Users, Settings, LogOut, Loader2, Trash2, Edit, Power } from "lucide-react";
+import { Copy, Plus, Users, Settings, LogOut, Loader2, Trash2, Edit, Power, Eye } from "lucide-react";
 import munLogo from "@/assets/mun-ai-logo.png";
 import ScheduleManager from "@/components/ScheduleManager";
 import AIAssistant from "@/components/AIAssistant";
@@ -21,6 +21,7 @@ const SecGenDashboard = () => {
   const [committeeChairCodes, setCommitteeChairCodes] = useState<Record<string, string>>({});
   const [pendingMembers, setPendingMembers] = useState<any[]>([]);
   const [newCommittee, setNewCommittee] = useState("");
+  const [newCommitteeType, setNewCommitteeType] = useState<"general" | "specialized" | "crisis">("general");
   const [loading, setLoading] = useState(true);
   const [editingDelegations, setEditingDelegations] = useState<string | null>(null);
   const [delegationsText, setDelegationsText] = useState("");
@@ -75,6 +76,7 @@ const SecGenDashboard = () => {
 
     const { error } = await supabase.from("committees").insert({
       conference_id: id, name: newCommittee.trim(), chair_code: chairCode,
+      committee_type: newCommitteeType, crisis_enabled: newCommitteeType === "crisis",
     } as any);
 
     if (error) { toast.error(error.message); } else {
@@ -199,8 +201,12 @@ const SecGenDashboard = () => {
           {committees.map((c: any) => (
             <div key={c.id} className="bg-secondary/50 rounded-xl px-4 py-3 mb-2">
               <div className="flex items-center justify-between">
-                <span className="font-medium text-foreground">{c.name}</span>
                 <div className="flex items-center gap-2">
+                  <span className="font-medium text-foreground">{c.name}</span>
+                  <span className="text-[10px] uppercase tracking-wide bg-primary/10 text-primary px-1.5 py-0.5 rounded">{c.committee_type || "general"}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => navigate(`/chair/${id}/${c.id}`)} title="View as observer" className="text-muted-foreground hover:text-accent"><Eye className="w-3.5 h-3.5" /></button>
                   <span className="font-mono text-xs text-muted-foreground">{committeeChairCodes[c.id] || "..."}</span>
                   <button onClick={() => copyCode(committeeChairCodes[c.id] || "", "Chair code")} className="text-muted-foreground hover:text-accent"><Copy className="w-3.5 h-3.5" /></button>
                   <button onClick={() => { setEditingDelegations(editingDelegations === c.id ? null : c.id); setDelegationsText(c.delegations || ""); }} className="text-muted-foreground hover:text-accent"><Edit className="w-3.5 h-3.5" /></button>
@@ -230,9 +236,19 @@ const SecGenDashboard = () => {
               )}
             </div>
           ))}
-          <div className="flex gap-2 mt-3">
-            <Input value={newCommittee} onChange={(e) => setNewCommittee(e.target.value)} placeholder="Committee name" className="rounded-xl" onKeyDown={(e) => e.key === "Enter" && addCommittee()} />
-            <Button onClick={addCommittee} className="rounded-xl gradient-primary border-0"><Plus className="w-4 h-4" /></Button>
+          <div className="mt-3 space-y-2">
+            <div className="flex gap-1">
+              {(["general", "specialized", "crisis"] as const).map((t) => (
+                <button key={t} type="button" onClick={() => setNewCommitteeType(t)}
+                  className={`flex-1 text-[11px] font-medium py-1.5 rounded-lg capitalize transition-colors ${newCommitteeType === t ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-muted-foreground hover:bg-secondary"}`}>
+                  {t}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Input value={newCommittee} onChange={(e) => setNewCommittee(e.target.value)} placeholder="Committee name" className="rounded-xl" onKeyDown={(e) => e.key === "Enter" && addCommittee()} />
+              <Button onClick={addCommittee} className="rounded-xl gradient-primary border-0"><Plus className="w-4 h-4" /></Button>
+            </div>
           </div>
         </div>
 
