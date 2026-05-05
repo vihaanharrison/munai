@@ -114,6 +114,7 @@ export type Database = {
       chair_sessions: {
         Row: {
           active: boolean | null
+          approved: boolean | null
           committee_id: string
           conference_id: string
           created_at: string | null
@@ -123,6 +124,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean | null
+          approved?: boolean | null
           committee_id: string
           conference_id: string
           created_at?: string | null
@@ -132,6 +134,7 @@ export type Database = {
         }
         Update: {
           active?: boolean | null
+          approved?: boolean | null
           committee_id?: string
           conference_id?: string
           created_at?: string | null
@@ -334,6 +337,9 @@ export type Database = {
           conference_id: string
           created_at: string | null
           crisis_enabled: boolean | null
+          crisis_extra_members: string | null
+          crisis_mode_active: boolean | null
+          custom_tabs: Json | null
           delegations: string | null
           id: string
           name: string
@@ -346,6 +352,9 @@ export type Database = {
           conference_id: string
           created_at?: string | null
           crisis_enabled?: boolean | null
+          crisis_extra_members?: string | null
+          crisis_mode_active?: boolean | null
+          custom_tabs?: Json | null
           delegations?: string | null
           id?: string
           name: string
@@ -358,6 +367,9 @@ export type Database = {
           conference_id?: string
           created_at?: string | null
           crisis_enabled?: boolean | null
+          crisis_extra_members?: string | null
+          crisis_mode_active?: boolean | null
+          custom_tabs?: Json | null
           delegations?: string | null
           id?: string
           name?: string
@@ -599,6 +611,7 @@ export type Database = {
           file_name: string | null
           file_url: string | null
           id: string
+          parent_id: string | null
         }
         Insert: {
           ai_summary?: string | null
@@ -609,6 +622,7 @@ export type Database = {
           file_name?: string | null
           file_url?: string | null
           id?: string
+          parent_id?: string | null
         }
         Update: {
           ai_summary?: string | null
@@ -619,6 +633,7 @@ export type Database = {
           file_name?: string | null
           file_url?: string | null
           id?: string
+          parent_id?: string | null
         }
         Relationships: [
           {
@@ -643,6 +658,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      custom_tab_entries: {
+        Row: {
+          author: string | null
+          committee_id: string
+          conference_id: string | null
+          created_at: string | null
+          id: string
+          payload: Json | null
+          status: string | null
+          tab_id: string
+        }
+        Insert: {
+          author?: string | null
+          committee_id: string
+          conference_id?: string | null
+          created_at?: string | null
+          id?: string
+          payload?: Json | null
+          status?: string | null
+          tab_id: string
+        }
+        Update: {
+          author?: string | null
+          committee_id?: string
+          conference_id?: string | null
+          created_at?: string | null
+          id?: string
+          payload?: Json | null
+          status?: string | null
+          tab_id?: string
+        }
+        Relationships: []
       }
       delegate_blocs: {
         Row: {
@@ -975,6 +1023,7 @@ export type Database = {
           id: string
           marked: boolean | null
           status: string | null
+          to_chair: boolean | null
           to_delegate_id: string
         }
         Insert: {
@@ -986,6 +1035,7 @@ export type Database = {
           id?: string
           marked?: boolean | null
           status?: string | null
+          to_chair?: boolean | null
           to_delegate_id: string
         }
         Update: {
@@ -997,6 +1047,7 @@ export type Database = {
           id?: string
           marked?: boolean | null
           status?: string | null
+          to_chair?: boolean | null
           to_delegate_id?: string
         }
         Relationships: [
@@ -1266,6 +1317,9 @@ export type Database = {
           created_at: string | null
           created_by_device_id: string | null
           crisis_enabled: boolean | null
+          crisis_extra_members: string | null
+          crisis_mode_active: boolean | null
+          custom_tabs: Json | null
           delegations: string | null
           ended_at: string | null
           id: string
@@ -1280,6 +1334,9 @@ export type Database = {
           created_at?: string | null
           created_by_device_id?: string | null
           crisis_enabled?: boolean | null
+          crisis_extra_members?: string | null
+          crisis_mode_active?: boolean | null
+          custom_tabs?: Json | null
           delegations?: string | null
           ended_at?: string | null
           id?: string
@@ -1294,12 +1351,48 @@ export type Database = {
           created_at?: string | null
           created_by_device_id?: string | null
           crisis_enabled?: boolean | null
+          crisis_extra_members?: string | null
+          crisis_mode_active?: boolean | null
+          custom_tabs?: Json | null
           delegations?: string | null
           ended_at?: string | null
           id?: string
           name?: string
           scoring_columns?: Json | null
           topic?: string | null
+        }
+        Relationships: []
+      }
+      unmod_caucus: {
+        Row: {
+          active: boolean | null
+          committee_id: string
+          conference_id: string
+          created_at: string | null
+          duration_seconds: number | null
+          id: string
+          started_at: string | null
+          topic: string
+        }
+        Insert: {
+          active?: boolean | null
+          committee_id: string
+          conference_id: string
+          created_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          started_at?: string | null
+          topic: string
+        }
+        Update: {
+          active?: boolean | null
+          committee_id?: string
+          conference_id?: string
+          created_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          started_at?: string | null
+          topic?: string
         }
         Relationships: []
       }

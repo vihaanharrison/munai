@@ -228,10 +228,13 @@ const DelegateRegister = () => {
   };
 
   const submitPOI = async () => {
-    if (!poiContent.trim() || !poiTarget || !delegate) { toast.error("Select a delegate and write your POI"); return; }
+    if (!poiContent.trim() || !poiTarget || !delegate) { toast.error("Select a recipient and write your POI"); return; }
+    const toChair = poiTarget === "__chair__";
     await supabase.from("pois").insert({
       committee_id: delegate.committee_id, conference_id: conferenceId!,
-      from_delegate_id: delegate.id, to_delegate_id: poiTarget,
+      from_delegate_id: delegate.id,
+      to_delegate_id: toChair ? delegate.id : poiTarget,
+      to_chair: toChair,
       content: poiContent.trim(), status: "pending",
     } as any);
     setPoiContent("");
@@ -276,6 +279,7 @@ const DelegateRegister = () => {
     const delegationList = selectedCommittee?.delegations
       ? selectedCommittee.delegations.split(",").map((d: string) => d.trim()).filter(Boolean)
       : [];
+    const setupIncomplete = selectedCommittee && delegationList.length === 0;
 
     return (
       <div className="min-h-screen bg-[#efeeea] flex items-center justify-center p-4">
@@ -299,27 +303,35 @@ const DelegateRegister = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label className="text-sm font-medium">Country / Delegation</Label>
-              {delegationList.length > 0 ? (
-                <div className="grid grid-cols-2 gap-1.5 mt-1.5 max-h-48 overflow-y-auto">
-                  {delegationList.map((d: string) => {
-                    const taken = takenDelegations.includes(d);
-                    return (
-                      <button key={d} disabled={taken} onClick={() => setCountry(d)}
-                        className={`text-xs px-3 py-2 rounded-lg text-left transition-colors ${
-                          taken ? "bg-secondary/30 text-muted-foreground/50 cursor-not-allowed line-through"
-                            : country === d ? "bg-primary text-primary-foreground"
-                            : "bg-secondary/50 text-foreground hover:bg-secondary"
-                        }`}>{d}</button>
-                    );
-                  })}
+            {setupIncomplete ? (
+              <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-3 text-xs text-destructive">
+                This committee isn't fully set up yet — the chair must publish the country matrix before delegates can join. Please check back later.
+              </div>
+            ) : (
+              <>
+                <div>
+                  <Label className="text-sm font-medium">Country / Delegation</Label>
+                  {delegationList.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-1.5 mt-1.5 max-h-48 overflow-y-auto">
+                      {delegationList.map((d: string) => {
+                        const taken = takenDelegations.includes(d);
+                        return (
+                          <button key={d} disabled={taken} onClick={() => setCountry(d)}
+                            className={`text-xs px-3 py-2 rounded-lg text-left transition-colors ${
+                              taken ? "bg-secondary/30 text-muted-foreground/50 cursor-not-allowed line-through"
+                                : country === d ? "bg-primary text-primary-foreground"
+                                : "bg-secondary/50 text-foreground hover:bg-secondary"
+                            }`}>{d}</button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground mt-1.5">Select a committee first to see available delegations.</p>
+                  )}
                 </div>
-              ) : (
-                <Input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="e.g. United States" className="rounded-xl mt-1.5" />
-              )}
-            </div>
-            <Button onClick={handleRegister} className="w-full rounded-xl h-11 gradient-primary border-0 font-semibold">Register</Button>
+                <Button onClick={handleRegister} disabled={!committeeId || !country} className="w-full rounded-xl h-11 gradient-primary border-0 font-semibold">Register</Button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -410,8 +422,9 @@ const DelegateRegister = () => {
                 <MessageSquare className="w-4 h-4 text-accent" /> Submit Point of Information
               </h2>
               <Select value={poiTarget} onValueChange={setPoiTarget}>
-                <SelectTrigger className="rounded-xl"><SelectValue placeholder="To delegate..." /></SelectTrigger>
+                <SelectTrigger className="rounded-xl"><SelectValue placeholder="To delegate or chair..." /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="__chair__">📣 Chair (direct)</SelectItem>
                   {committeeDelegates.filter((d) => d.id !== delegate?.id).map((d) => (
                     <SelectItem key={d.id} value={d.id}>{d.country} — {d.name}</SelectItem>
                   ))}

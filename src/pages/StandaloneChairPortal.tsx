@@ -215,7 +215,8 @@ const StandaloneChairPortal = () => {
   const pendingDelegates = delegates.filter((d) => !d.approved && d.active);
   const approvedDelegates = delegates.filter((d) => d.approved);
 
-  const isCrisis = (committee?.committee_type === "crisis") || !!committee?.crisis_enabled;
+  const isCrisisCommittee = committee?.committee_type === "crisis";
+  const isCrisis = isCrisisCommittee || !!committee?.crisis_enabled || !!committee?.crisis_mode_active;
   const tabItems: { key: Tab; label: string; badge?: number }[] = [
     { key: "delegates", label: "Delegates", badge: pendingCount },
     { key: "speakers", label: "Speakers" },
@@ -229,6 +230,14 @@ const StandaloneChairPortal = () => {
     { key: "ai", label: "AI" },
   ];
 
+  const toggleCrisisMode = async () => {
+    if (!committee || !id) return;
+    const next = !committee.crisis_mode_active;
+    await supabase.from("standalone_committees" as any).update({ crisis_mode_active: next } as any).eq("id", id);
+    setCommittee({ ...committee, crisis_mode_active: next });
+    toast.success(next ? "Crisis mode enabled" : "Crisis mode disabled");
+  };
+
   return (
     <div className="min-h-screen bg-[#efeeea] flex flex-col">
       <div className="p-4 pb-0">
@@ -241,13 +250,18 @@ const StandaloneChairPortal = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {!isCrisisCommittee && (
+              <Button variant={committee.crisis_mode_active ? "destructive" : "ghost"} size="sm" onClick={toggleCrisisMode} className="rounded-xl text-xs" title={committee.crisis_mode_active ? "Disable crisis mode" : "Enable crisis mode"}>
+                <AlertTriangle className="w-4 h-4 mr-1" /> {committee.crisis_mode_active ? "Crisis On" : "Crisis"}
+              </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={() => navigate("/hmun-rop")} className="rounded-xl" title="HMUN ROP"><BookOpen className="w-4 h-4" /></Button>
             <ConfirmDialog
-              trigger={<Button variant="ghost" size="icon" className="rounded-xl" title="End Session"><LogOut className="w-5 h-5" /></Button>}
-              title="End Session"
-              description="Are you sure you want to end your chair session? You will be returned to the homepage."
+              trigger={<Button variant="ghost" size="icon" className="rounded-xl" title="Exit (you can re-enter anytime)"><LogOut className="w-5 h-5" /></Button>}
+              title="Exit Session"
+              description="You'll be returned to the homepage. The committee remains active and you can re-enter anytime with your code."
               onConfirm={handleEndSession}
-              confirmLabel="End Session"
+              confirmLabel="Exit"
               variant="destructive"
             />
           </div>

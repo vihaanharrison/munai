@@ -99,7 +99,7 @@ const ChairPOIPanel = ({ committeeId, conferenceId, delegates }: Props) => {
           {pending.map((p: any) => (
             <div key={p.id} className="bg-secondary/50 rounded-xl px-4 py-3 mb-2">
               <p className="text-xs text-muted-foreground mb-1">
-                <strong>{getDelegateName(p.from_delegate_id)}</strong> ({getDelegateCountry(p.from_delegate_id)}) → <strong>{getDelegateName(p.to_delegate_id)}</strong> ({getDelegateCountry(p.to_delegate_id)})
+                <strong>{getDelegateName(p.from_delegate_id)}</strong> ({getDelegateCountry(p.from_delegate_id)}) → {p.to_chair ? <strong className="text-accent">📣 Chair</strong> : <><strong>{getDelegateName(p.to_delegate_id)}</strong> ({getDelegateCountry(p.to_delegate_id)})</>}
               </p>
               <p className="text-sm text-foreground mb-2">{p.content}</p>
               <div className="flex gap-2">
