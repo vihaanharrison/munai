@@ -131,22 +131,42 @@ const ChairPortal = () => {
   };
 
   const handleLogin = async () => {
-    if (!displayName.trim()) { toast.error("Please enter your name"); return; }
-    const { data: existing } = await supabase.from("chair_sessions").select("id").eq("committee_id", committeeId!).eq("active", true) as any;
+    const trimmed = displayName.trim();
+    if (trimmed.length < 2 || trimmed.length > 60) { toast.error("Name must be 2–60 characters"); return; }
+    if (!committeeId || !conferenceId) { toast.error("Missing committee context"); return; }
+
+    // Verify parent committee exists before creating session
+    const { data: comm } = await supabase.from("committees").select("id").eq("id", committeeId).maybeSingle() as any;
+    if (!comm) { toast.error("Committee not found — refresh and try again"); return; }
+
+    const { data: existing } = await supabase.from("chair_sessions").select("id").eq("committee_id", committeeId).eq("active", true) as any;
     if (existing && existing.length >= 3) { toast.error("Maximum 3 chairs per committee reached"); return; }
 
     const deviceId = getDeviceId();
     const { data, error } = await supabase.from("chair_sessions").insert({
-      device_id: deviceId, conference_id: conferenceId!, committee_id: committeeId!,
-      display_name: displayName.trim(), active: true,
+      device_id: deviceId, conference_id: conferenceId, committee_id: committeeId,
+      display_name: trimmed, active: true, approved: false,
     } as any).select().single();
 
     if (error) { toast.error(error.message); return; }
     setSessionId((data as any).id);
+    setSessionApproved(false);
     setStep("dashboard");
     await Promise.all([loadDelegates(), loadAgendas(), loadUpdates(), loadCommitteeFiles()]);
-    toast.success("Logged in as Chair");
+    toast.success("Logged in — waiting for SecGen approval");
   };
+
+  // Subscribe to session approval changes
+  useEffect(() => {
+    if (!sessionId) return;
+    const ch = supabase.channel(`chair-session-${sessionId}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "chair_sessions", filter: `id=eq.${sessionId}` }, (payload: any) => {
+        if (payload.new?.approved) { setSessionApproved(true); toast.success("Approved by SecGen"); }
+        if (payload.new?.active === false) { toast.error("Session ended by SecGen"); navigate("/"); }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [sessionId, navigate]);
 
   const handleEndSession = async () => {
     if (!sessionId) return;
