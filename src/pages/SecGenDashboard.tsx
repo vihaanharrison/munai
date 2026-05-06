@@ -175,9 +175,14 @@ const SecGenDashboard = () => {
               if (ended) {
                 const endsAt = new Date(new Date(conference.ended_at).getTime() + 48 * 3600000);
                 return (
-                  <span className="text-xs bg-accent/10 text-accent px-3 py-1.5 rounded-lg" title="Archive download window">
-                    Archive open · closes {endsAt.toLocaleDateString()}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs bg-accent/10 text-accent px-3 py-1.5 rounded-lg" title="Archive download window">
+                      Archive open · closes {endsAt.toLocaleDateString()}
+                    </span>
+                    <Button size="sm" variant="outline" onClick={downloadArchive} disabled={archiving} className="rounded-lg text-xs">
+                      {archiving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3 mr-1" />} Download archive
+                    </Button>
+                  </div>
                 );
               }
               if (canEnd) {
@@ -294,10 +299,34 @@ const SecGenDashboard = () => {
           </div>
         </div>
 
+        {/* Pending Chair Sessions */}
+        {pendingChairs.length > 0 && (
+          <div className="glass-card rounded-2xl p-5">
+            <h2 className="font-display font-semibold text-foreground flex items-center gap-2 mb-3">
+              <Shield className="w-4 h-4 text-accent" /> Pending Chair Approvals ({pendingChairs.length})
+            </h2>
+            {pendingChairs.map((s: any) => {
+              const c = committees.find((x: any) => x.id === s.committee_id);
+              return (
+                <div key={s.id} className="flex items-center justify-between bg-secondary/50 rounded-xl px-4 py-2.5 mb-2">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{s.display_name}</p>
+                    <p className="text-xs text-muted-foreground">{c?.name || "Unknown committee"}</p>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button size="sm" onClick={() => approveChair(s.id)} className="rounded-lg gradient-primary border-0 text-xs h-7"><Check className="w-3 h-3 mr-1" /> Approve</Button>
+                    <Button size="sm" variant="ghost" onClick={() => denyChair(s.id)} className="rounded-lg text-xs h-7"><X className="w-3 h-3" /></Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Pending Members */}
         {pendingMembers.filter((m: any) => !m.approved).length > 0 && (
           <div className="glass-card rounded-2xl p-5">
-            <h2 className="font-display font-semibold text-foreground mb-3">Pending Approvals</h2>
+            <h2 className="font-display font-semibold text-foreground mb-3">Pending Secretariat</h2>
             {pendingMembers.filter((m: any) => !m.approved).map((m: any) => (
               <div key={m.id} className="flex items-center justify-between bg-secondary/50 rounded-xl px-4 py-2.5 mb-2">
                 <span className="text-foreground">{m.display_name || "Unknown"}</span>
