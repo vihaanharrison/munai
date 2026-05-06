@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Copy, Plus, Users, Settings, LogOut, Loader2, Trash2, Edit, Power, Eye } from "lucide-react";
+import { Copy, Plus, Users, Settings, LogOut, Loader2, Trash2, Edit, Power, Eye, Download, Check, X, Shield } from "lucide-react";
 import munLogo from "@/assets/mun-ai-logo.png";
 import ScheduleManager from "@/components/ScheduleManager";
 import AIAssistant from "@/components/AIAssistant";
@@ -20,6 +20,8 @@ const SecGenDashboard = () => {
   const [committees, setCommittees] = useState<any[]>([]);
   const [committeeChairCodes, setCommitteeChairCodes] = useState<Record<string, string>>({});
   const [pendingMembers, setPendingMembers] = useState<any[]>([]);
+  const [pendingChairs, setPendingChairs] = useState<any[]>([]);
+  const [archiving, setArchiving] = useState(false);
   const [newCommittee, setNewCommittee] = useState("");
   const [newCommitteeType, setNewCommitteeType] = useState<"general" | "specialized" | "crisis">("general");
   const [loading, setLoading] = useState(true);
@@ -41,7 +43,15 @@ const SecGenDashboard = () => {
     const comms = (comRes.data as any) || [];
     setCommittees(comms);
     setPendingMembers((membersRes.data as any) || []);
-    
+
+    // Load pending chair sessions for all committees in this conference
+    if (comms.length) {
+      const { data: chairs } = await supabase.from("chair_sessions").select("*")
+        .in("committee_id", comms.map((c: any) => c.id))
+        .eq("active", true).eq("approved", false) as any;
+      setPendingChairs(chairs || []);
+    }
+
     // Fetch chair codes for each committee via secure RPC
     const chairCodesMap: Record<string, string> = {};
     await Promise.all(comms.map(async (c: any) => {
@@ -50,6 +60,38 @@ const SecGenDashboard = () => {
     }));
     setCommitteeChairCodes(chairCodesMap);
     setLoading(false);
+  };
+
+  const approveChair = async (sid: string) => {
+    await supabase.from("chair_sessions").update({ approved: true } as any).eq("id", sid);
+    toast.success("Chair approved");
+    loadData();
+  };
+  const denyChair = async (sid: string) => {
+    await supabase.from("chair_sessions").update({ active: false } as any).eq("id", sid);
+    toast.success("Chair denied");
+    loadData();
+  };
+
+  const downloadArchive = async () => {
+    if (!id) return;
+    setArchiving(true);
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/export-conference-archive`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        body: JSON.stringify({ conferenceId: id }),
+      });
+      if (!resp.ok) throw new Error("Export failed");
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `${conference?.name || "conference"}-archive.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Archive downloaded");
+    } catch (e: any) { toast.error(e.message); }
+    finally { setArchiving(false); }
   };
 
   const conferenceDays = useMemo(() => {
@@ -133,9 +175,14 @@ const SecGenDashboard = () => {
               if (ended) {
                 const endsAt = new Date(new Date(conference.ended_at).getTime() + 48 * 3600000);
                 return (
-                  <span className="text-xs bg-accent/10 text-accent px-3 py-1.5 rounded-lg" title="Archive download window">
-                    Archive open · closes {endsAt.toLocaleDateString()}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs bg-accent/10 text-accent px-3 py-1.5 rounded-lg" title="Archive download window">
+                      Archive open · closes {endsAt.toLocaleDateString()}
+                    </span>
+                    <Button size="sm" variant="outline" onClick={downloadArchive} disabled={archiving} className="rounded-lg text-xs">
+                      {archiving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3 mr-1" />} Download archive
+                    </Button>
+                  </div>
                 );
               }
               if (canEnd) {
@@ -252,10 +299,34 @@ const SecGenDashboard = () => {
           </div>
         </div>
 
+        {/* Pending Chair Sessions */}
+        {pendingChairs.length > 0 && (
+          <div className="glass-card rounded-2xl p-5">
+            <h2 className="font-display font-semibold text-foreground flex items-center gap-2 mb-3">
+              <Shield className="w-4 h-4 text-accent" /> Pending Chair Approvals ({pendingChairs.length})
+            </h2>
+            {pendingChairs.map((s: any) => {
+              const c = committees.find((x: any) => x.id === s.committee_id);
+              return (
+                <div key={s.id} className="flex items-center justify-between bg-secondary/50 rounded-xl px-4 py-2.5 mb-2">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{s.display_name}</p>
+                    <p className="text-xs text-muted-foreground">{c?.name || "Unknown committee"}</p>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button size="sm" onClick={() => approveChair(s.id)} className="rounded-lg gradient-primary border-0 text-xs h-7"><Check className="w-3 h-3 mr-1" /> Approve</Button>
+                    <Button size="sm" variant="ghost" onClick={() => denyChair(s.id)} className="rounded-lg text-xs h-7"><X className="w-3 h-3" /></Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Pending Members */}
         {pendingMembers.filter((m: any) => !m.approved).length > 0 && (
           <div className="glass-card rounded-2xl p-5">
-            <h2 className="font-display font-semibold text-foreground mb-3">Pending Approvals</h2>
+            <h2 className="font-display font-semibold text-foreground mb-3">Pending Secretariat</h2>
             {pendingMembers.filter((m: any) => !m.approved).map((m: any) => (
               <div key={m.id} className="flex items-center justify-between bg-secondary/50 rounded-xl px-4 py-2.5 mb-2">
                 <span className="text-foreground">{m.display_name || "Unknown"}</span>

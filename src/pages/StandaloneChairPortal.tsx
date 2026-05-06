@@ -19,6 +19,8 @@ import BlocsManager from "@/components/chair/BlocsManager";
 import CrisisPanel from "@/components/chair/CrisisPanel";
 import PlannedNotes from "@/components/PlannedNotes";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import CustomTabsManager from "@/components/chair/CustomTabsManager";
+import { Download } from "lucide-react";
 
 const DEVICE_KEY = "munai_standalone_chair";
 function getDeviceId() {
@@ -27,7 +29,7 @@ function getDeviceId() {
   return id;
 }
 
-type Tab = "delegates" | "speakers" | "scoring" | "pois" | "agendas" | "blocs" | "updates" | "crisis" | "files" | "ai" | "notes";
+type Tab = "delegates" | "speakers" | "scoring" | "pois" | "agendas" | "blocs" | "updates" | "crisis" | "files" | "ai" | "notes" | "custom";
 
 const StandaloneChairPortal = () => {
   const { id } = useParams<{ id: string }>();
@@ -227,8 +229,28 @@ const StandaloneChairPortal = () => {
     { key: "updates", label: "Updates" },
     ...(isCrisis ? [{ key: "crisis" as Tab, label: "Crisis" }] : []),
     { key: "files", label: "Files" },
+    { key: "custom", label: "Custom" },
     { key: "ai", label: "AI" },
   ];
+
+  const downloadArchive = async () => {
+    if (!id) return;
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/export-conference-archive`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        body: JSON.stringify({ standaloneCommitteeId: id }),
+      });
+      if (!resp.ok) throw new Error("Export failed");
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `${committee?.name || "committee"}-archive.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Archive downloaded");
+    } catch (e: any) { toast.error(e.message); }
+  };
 
   const toggleCrisisMode = async () => {
     if (!committee || !id) return;
@@ -255,6 +277,7 @@ const StandaloneChairPortal = () => {
                 <AlertTriangle className="w-4 h-4 mr-1" /> {committee.crisis_mode_active ? "Crisis On" : "Crisis"}
               </Button>
             )}
+            <Button variant="ghost" size="icon" onClick={downloadArchive} className="rounded-xl" title="Download committee archive (.zip)"><Download className="w-4 h-4" /></Button>
             <Button variant="ghost" size="icon" onClick={() => navigate("/hmun-rop")} className="rounded-xl" title="HMUN ROP"><BookOpen className="w-4 h-4" /></Button>
             <ConfirmDialog
               trigger={<Button variant="ghost" size="icon" className="rounded-xl" title="Exit (you can re-enter anytime)"><LogOut className="w-5 h-5" /></Button>}
@@ -405,6 +428,7 @@ const StandaloneChairPortal = () => {
           </div>
         )}
 
+        {tab === "custom" && id && <CustomTabsManager committeeId={id} committee={committee} isStandalone authorName={displayName} />}
         {tab === "ai" && <AIAssistant />}
       </div>
 

@@ -20,6 +20,7 @@ import BlocsManager from "@/components/chair/BlocsManager";
 import CrisisPanel from "@/components/chair/CrisisPanel";
 import PlannedNotes from "@/components/PlannedNotes";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import CustomTabsManager from "@/components/chair/CustomTabsManager";
 
 const DEVICE_KEY = "munai_chair_device";
 function getDeviceId() {
@@ -28,7 +29,7 @@ function getDeviceId() {
   return id;
 }
 
-type Tab = "delegates" | "speakers" | "scoring" | "pois" | "agendas" | "blocs" | "updates" | "crisis" | "files" | "ai";
+type Tab = "delegates" | "speakers" | "scoring" | "pois" | "agendas" | "blocs" | "updates" | "crisis" | "files" | "ai" | "custom";
 
 const ChairPortal = () => {
   const { conferenceId, committeeId } = useParams<{ conferenceId: string; committeeId: string }>();
@@ -72,12 +73,15 @@ const ChairPortal = () => {
     return () => { supabase.removeChannel(channel); };
   }, [committeeId]);
 
+  const [sessionApproved, setSessionApproved] = useState(true);
+
   const loadInitial = async () => {
     if (!conferenceId || !committeeId) return;
     const [comRes, confRes] = await Promise.all([
       supabase.from("committees").select("*").eq("id", committeeId).single(),
       supabase.from("conferences_public").select("*").eq("id", conferenceId).single(),
     ]);
+    if (!comRes.data) { toast.error("Committee not found"); setLoading(false); return; }
     setCommittee(comRes.data);
     setConference(confRes.data);
 
@@ -90,6 +94,7 @@ const ChairPortal = () => {
     if (existingSession) {
       setSessionId(existingSession.id);
       setDisplayName(existingSession.display_name || "");
+      setSessionApproved(!!existingSession.approved);
       setStep("dashboard");
       await Promise.all([loadDelegates(), loadAgendas(), loadUpdates(), loadCommitteeFiles()]);
     }
@@ -126,22 +131,42 @@ const ChairPortal = () => {
   };
 
   const handleLogin = async () => {
-    if (!displayName.trim()) { toast.error("Please enter your name"); return; }
-    const { data: existing } = await supabase.from("chair_sessions").select("id").eq("committee_id", committeeId!).eq("active", true) as any;
+    const trimmed = displayName.trim();
+    if (trimmed.length < 2 || trimmed.length > 60) { toast.error("Name must be 2–60 characters"); return; }
+    if (!committeeId || !conferenceId) { toast.error("Missing committee context"); return; }
+
+    // Verify parent committee exists before creating session
+    const { data: comm } = await supabase.from("committees").select("id").eq("id", committeeId).maybeSingle() as any;
+    if (!comm) { toast.error("Committee not found — refresh and try again"); return; }
+
+    const { data: existing } = await supabase.from("chair_sessions").select("id").eq("committee_id", committeeId).eq("active", true) as any;
     if (existing && existing.length >= 3) { toast.error("Maximum 3 chairs per committee reached"); return; }
 
     const deviceId = getDeviceId();
     const { data, error } = await supabase.from("chair_sessions").insert({
-      device_id: deviceId, conference_id: conferenceId!, committee_id: committeeId!,
-      display_name: displayName.trim(), active: true,
+      device_id: deviceId, conference_id: conferenceId, committee_id: committeeId,
+      display_name: trimmed, active: true, approved: false,
     } as any).select().single();
 
     if (error) { toast.error(error.message); return; }
     setSessionId((data as any).id);
+    setSessionApproved(false);
     setStep("dashboard");
     await Promise.all([loadDelegates(), loadAgendas(), loadUpdates(), loadCommitteeFiles()]);
-    toast.success("Logged in as Chair");
+    toast.success("Logged in — waiting for SecGen approval");
   };
+
+  // Subscribe to session approval changes
+  useEffect(() => {
+    if (!sessionId) return;
+    const ch = supabase.channel(`chair-session-${sessionId}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "chair_sessions", filter: `id=eq.${sessionId}` }, (payload: any) => {
+        if (payload.new?.approved) { setSessionApproved(true); toast.success("Approved by SecGen"); }
+        if (payload.new?.active === false) { toast.error("Session ended by SecGen"); navigate("/"); }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [sessionId, navigate]);
 
   const handleEndSession = async () => {
     if (!sessionId) return;
@@ -253,6 +278,7 @@ const ChairPortal = () => {
     { key: "updates", label: "Updates", icon: Bell },
     ...(isCrisis ? [{ key: "crisis" as Tab, label: "Crisis", icon: AlertTriangle }] : []),
     { key: "files", label: "Files", icon: FileText },
+    { key: "custom", label: "Custom", icon: FileText },
     { key: "ai", label: "AI", icon: null },
   ];
 
@@ -285,6 +311,15 @@ const ChairPortal = () => {
       {conferenceId && (
         <div className="max-w-3xl mx-auto w-full px-4 mt-3">
           <LiveConferenceClock conferenceId={conferenceId} />
+        </div>
+      )}
+
+      {!sessionApproved && step === "dashboard" && (
+        <div className="max-w-3xl mx-auto w-full px-4 mt-3">
+          <div className="glass-card rounded-xl px-4 py-3 border border-amber-500/30 bg-amber-500/10 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+            <p className="text-xs text-foreground">Awaiting Secretary General approval. You can browse but write actions are restricted.</p>
+          </div>
         </div>
       )}
 
@@ -542,6 +577,10 @@ const ChairPortal = () => {
               </div>
             )}
           </div>
+        )}
+
+        {tab === "custom" && committeeId && (
+          <CustomTabsManager committeeId={committeeId} conferenceId={conferenceId} committee={committee} authorName={displayName} />
         )}
 
         {tab === "ai" && <AIAssistant />}
