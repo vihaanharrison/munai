@@ -254,6 +254,7 @@ const ChairPortal = () => {
     { key: "updates", label: "Updates", icon: Bell },
     ...(isCrisis ? [{ key: "crisis" as Tab, label: "Crisis", icon: AlertTriangle }] : []),
     { key: "files", label: "Files", icon: FileText },
+    { key: "custom", label: "Custom", icon: FileText },
     { key: "ai", label: "AI", icon: null },
   ];
 
@@ -543,6 +544,10 @@ const ChairPortal = () => {
               </div>
             )}
           </div>
+        )}
+
+        {tab === "custom" && committeeId && (
+          <CustomTabsManager committeeId={committeeId} conferenceId={conferenceId} committee={committee} authorName={displayName} />
         )}
 
         {tab === "ai" && <AIAssistant />}
