@@ -142,60 +142,25 @@ const SpeakersList = ({ committeeId, conferenceId, delegates, onDelegatesUpdated
     toast.success("Moderated caucus started");
   };
 
-  const submitGslScore = async () => {
-    if (!scoringEntry || !chairFeedback.trim()) return;
-    setScoreLoading(true);
-    try {
-      const delegate = approvedDelegates.find((d) => d.id === scoringEntry.delegate_id);
-      // Get the delegate's GSL speech
-      const { data: docs } = await supabase.from("delegate_documents").select("*")
-        .eq("delegate_id", scoringEntry.delegate_id)
-        .eq("doc_type", "gsl_speech")
-        .order("created_at", { ascending: false })
-        .limit(1) as any;
-
-      const speechText = docs?.[0]?.content || "";
-
-      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assist`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
-          type: "gsl-score",
-          content: speechText,
-          chairFeedback: chairFeedback,
-          delegateName: delegate?.country || delegate?.name,
-        }),
-      });
-      const result = await resp.json();
-      const score = result.score || 0;
-
-      // Save score to speakers list entry
-      await supabase.from("speakers_list").update({
-        chair_feedback: chairFeedback,
-        ai_score: score,
-        speech_text: speechText,
-      } as any).eq("id", scoringEntry.id);
-
-      // Update delegate marks
-      if (delegate) {
-        const marks = { ...(delegate.marks || {}) };
-        marks.Speaking = (marks.Speaking || 0) + score;
-        await supabase.from("delegates").update({ marks } as any).eq("id", delegate.id);
-        onDelegatesUpdated();
-      }
-
-      toast.success(`GSL scored: ${score}/20`);
-      setShowScorePrompt(false);
-      setChairFeedback("");
-      setScoringEntry(null);
-    } catch {
-      toast.error("Scoring failed");
-    } finally {
-      setScoreLoading(false);
+  const onScoreSubmitted = async (score: number) => {
+    if (!scoringEntry) return;
+    const delegate = approvedDelegates.find((d) => d.id === scoringEntry.delegate_id);
+    if (delegate) {
+      const marks = { ...(delegate.marks || {}) };
+      marks.Speaking = (marks.Speaking || 0) + score;
+      await supabase.from("delegates").update({ marks } as any).eq("id", delegate.id);
+      onDelegatesUpdated();
     }
+  };
+
+  const [latestSpeechText, setLatestSpeechText] = useState("");
+  const openScoringModal = async (entry: any) => {
+    setScoringEntry(entry);
+    const { data: docs } = await supabase.from("delegate_documents").select("*")
+      .eq("delegate_id", entry.delegate_id).eq("doc_type", "gsl_speech")
+      .order("created_at", { ascending: false }).limit(1) as any;
+    setLatestSpeechText(docs?.[0]?.content || "");
+    setShowScorePrompt(true);
   };
 
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
