@@ -174,28 +174,14 @@ const SpeakersList = ({ committeeId, conferenceId, delegates, onDelegatesUpdated
 
   return (
     <div className="space-y-4">
-      {/* GSL Score Prompt */}
-      {showScorePrompt && scoringEntry && (
-        <div className="fixed inset-0 bg-foreground/30 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowScorePrompt(false)}>
-          <div className="glass-card rounded-2xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-display font-bold text-foreground mb-2">Score GSL Speech</h2>
-            <p className="text-sm text-muted-foreground mb-3">
-              Delegate: <strong>{getDName(scoringEntry.delegate_id)}</strong>
-            </p>
-            <Textarea
-              value={chairFeedback}
-              onChange={(e) => setChairFeedback(e.target.value)}
-              placeholder="Your feedback on the speech..."
-              className="rounded-xl min-h-[80px] mb-3"
-            />
-            <p className="text-xs text-muted-foreground mb-3">AI will generate a score (0-20) based on your feedback and the speech content.</p>
-            <Button onClick={submitGslScore} disabled={scoreLoading || !chairFeedback.trim()} className="w-full rounded-xl gradient-primary border-0">
-              {scoreLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Check className="w-4 h-4 mr-2" />}
-              Submit Score
-            </Button>
-          </div>
-        </div>
-      )}
+      <ScoreSpeechModal
+        open={showScorePrompt}
+        onClose={() => { setShowScorePrompt(false); setScoringEntry(null); }}
+        scoringEntry={scoringEntry}
+        delegateName={scoringEntry ? getDName(scoringEntry.delegate_id) : ""}
+        speechText={latestSpeechText}
+        onSubmitted={onScoreSubmitted}
+      />
 
       {/* List Type Selector */}
       <div className="glass-card rounded-2xl p-5">
