@@ -277,6 +277,7 @@ const StandaloneChairPortal = () => {
                 <AlertTriangle className="w-4 h-4 mr-1" /> {committee.crisis_mode_active ? "Crisis On" : "Crisis"}
               </Button>
             )}
+            <Button variant="ghost" size="icon" onClick={downloadArchive} className="rounded-xl" title="Download committee archive (.zip)"><Download className="w-4 h-4" /></Button>
             <Button variant="ghost" size="icon" onClick={() => navigate("/hmun-rop")} className="rounded-xl" title="HMUN ROP"><BookOpen className="w-4 h-4" /></Button>
             <ConfirmDialog
               trigger={<Button variant="ghost" size="icon" className="rounded-xl" title="Exit (you can re-enter anytime)"><LogOut className="w-5 h-5" /></Button>}
