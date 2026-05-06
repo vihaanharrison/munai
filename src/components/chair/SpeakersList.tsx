@@ -76,8 +76,7 @@ const SpeakersList = ({ committeeId, conferenceId, delegates, onDelegatesUpdated
             // Prompt for GSL scoring
             const speaking = entries.find((e) => e.status === "speaking");
             if (speaking && listType === "gsl") {
-              setScoringEntry(speaking);
-              setShowScorePrompt(true);
+              openScoringModal(speaking);
             }
             return 0;
           }
