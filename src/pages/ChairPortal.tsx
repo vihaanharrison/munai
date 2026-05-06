@@ -73,12 +73,15 @@ const ChairPortal = () => {
     return () => { supabase.removeChannel(channel); };
   }, [committeeId]);
 
+  const [sessionApproved, setSessionApproved] = useState(true);
+
   const loadInitial = async () => {
     if (!conferenceId || !committeeId) return;
     const [comRes, confRes] = await Promise.all([
       supabase.from("committees").select("*").eq("id", committeeId).single(),
       supabase.from("conferences_public").select("*").eq("id", conferenceId).single(),
     ]);
+    if (!comRes.data) { toast.error("Committee not found"); setLoading(false); return; }
     setCommittee(comRes.data);
     setConference(confRes.data);
 
@@ -91,6 +94,7 @@ const ChairPortal = () => {
     if (existingSession) {
       setSessionId(existingSession.id);
       setDisplayName(existingSession.display_name || "");
+      setSessionApproved(!!existingSession.approved);
       setStep("dashboard");
       await Promise.all([loadDelegates(), loadAgendas(), loadUpdates(), loadCommitteeFiles()]);
     }
