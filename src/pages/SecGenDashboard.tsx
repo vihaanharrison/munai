@@ -20,6 +20,8 @@ const SecGenDashboard = () => {
   const [committees, setCommittees] = useState<any[]>([]);
   const [committeeChairCodes, setCommitteeChairCodes] = useState<Record<string, string>>({});
   const [pendingMembers, setPendingMembers] = useState<any[]>([]);
+  const [pendingChairs, setPendingChairs] = useState<any[]>([]);
+  const [archiving, setArchiving] = useState(false);
   const [newCommittee, setNewCommittee] = useState("");
   const [newCommitteeType, setNewCommitteeType] = useState<"general" | "specialized" | "crisis">("general");
   const [loading, setLoading] = useState(true);
@@ -41,7 +43,15 @@ const SecGenDashboard = () => {
     const comms = (comRes.data as any) || [];
     setCommittees(comms);
     setPendingMembers((membersRes.data as any) || []);
-    
+
+    // Load pending chair sessions for all committees in this conference
+    if (comms.length) {
+      const { data: chairs } = await supabase.from("chair_sessions").select("*")
+        .in("committee_id", comms.map((c: any) => c.id))
+        .eq("active", true).eq("approved", false) as any;
+      setPendingChairs(chairs || []);
+    }
+
     // Fetch chair codes for each committee via secure RPC
     const chairCodesMap: Record<string, string> = {};
     await Promise.all(comms.map(async (c: any) => {
@@ -50,6 +60,38 @@ const SecGenDashboard = () => {
     }));
     setCommitteeChairCodes(chairCodesMap);
     setLoading(false);
+  };
+
+  const approveChair = async (sid: string) => {
+    await supabase.from("chair_sessions").update({ approved: true } as any).eq("id", sid);
+    toast.success("Chair approved");
+    loadData();
+  };
+  const denyChair = async (sid: string) => {
+    await supabase.from("chair_sessions").update({ active: false } as any).eq("id", sid);
+    toast.success("Chair denied");
+    loadData();
+  };
+
+  const downloadArchive = async () => {
+    if (!id) return;
+    setArchiving(true);
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/export-conference-archive`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        body: JSON.stringify({ conferenceId: id }),
+      });
+      if (!resp.ok) throw new Error("Export failed");
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `${conference?.name || "conference"}-archive.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Archive downloaded");
+    } catch (e: any) { toast.error(e.message); }
+    finally { setArchiving(false); }
   };
 
   const conferenceDays = useMemo(() => {
