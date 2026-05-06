@@ -427,6 +427,7 @@ const StandaloneChairPortal = () => {
           </div>
         )}
 
+        {tab === "custom" && id && <CustomTabsManager committeeId={id} committee={committee} isStandalone authorName={displayName} />}
         {tab === "ai" && <AIAssistant />}
       </div>
 
