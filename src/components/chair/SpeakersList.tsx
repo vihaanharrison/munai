@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Play, SkipForward, Plus, Clock, Mic, Check, Trash2, Loader2 } from "lucide-react";
+import ScoreSpeechModal from "./ScoreSpeechModal";
 
 interface Props {
   committeeId: string;
