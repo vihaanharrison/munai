@@ -20,6 +20,7 @@ import BlocsManager from "@/components/chair/BlocsManager";
 import CrisisPanel from "@/components/chair/CrisisPanel";
 import PlannedNotes from "@/components/PlannedNotes";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import CustomTabsManager from "@/components/chair/CustomTabsManager";
 
 const DEVICE_KEY = "munai_chair_device";
 function getDeviceId() {
@@ -28,7 +29,7 @@ function getDeviceId() {
   return id;
 }
 
-type Tab = "delegates" | "speakers" | "scoring" | "pois" | "agendas" | "blocs" | "updates" | "crisis" | "files" | "ai";
+type Tab = "delegates" | "speakers" | "scoring" | "pois" | "agendas" | "blocs" | "updates" | "crisis" | "files" | "ai" | "custom";
 
 const ChairPortal = () => {
   const { conferenceId, committeeId } = useParams<{ conferenceId: string; committeeId: string }>();
