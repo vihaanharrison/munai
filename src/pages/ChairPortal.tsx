@@ -314,6 +314,15 @@ const ChairPortal = () => {
         </div>
       )}
 
+      {!sessionApproved && step === "dashboard" && (
+        <div className="max-w-3xl mx-auto w-full px-4 mt-3">
+          <div className="glass-card rounded-xl px-4 py-3 border border-amber-500/30 bg-amber-500/10 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+            <p className="text-xs text-foreground">Awaiting Secretary General approval. You can browse but write actions are restricted.</p>
+          </div>
+        </div>
+      )}
+
       {/* Tab bar - scrollable */}
       <div className="max-w-3xl mx-auto w-full px-4 mt-3">
         <div className="flex gap-1 bg-secondary/50 rounded-xl p-1 overflow-x-auto">
