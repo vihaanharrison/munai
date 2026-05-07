@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
   Loader2, Users, LogOut, User, Check, X, Plus, FileText,
-  Bell, BookOpen, AlertTriangle, Eye, MessageSquare, BarChart3, Mic, Shield, Upload, Trash2
+  Bell, BookOpen, AlertTriangle, Eye, MessageSquare, BarChart3, Mic, Shield, Upload, Trash2, ArrowLeft
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import munLogo from "@/assets/mun-ai-logo.png";
 import LiveConferenceClock from "@/components/LiveConferenceClock";
 import AIAssistant from "@/components/AIAssistant";
@@ -145,7 +146,7 @@ const ChairPortal = () => {
     const deviceId = getDeviceId();
     const { data, error } = await supabase.from("chair_sessions").insert({
       device_id: deviceId, conference_id: conferenceId, committee_id: committeeId,
-      display_name: trimmed, active: true, approved: false,
+      display_name: trimmed, active: true, approved: false, source: "conference",
     } as any).select().single();
 
     if (error) { toast.error(error.message); return; }
@@ -288,6 +289,12 @@ const ChairPortal = () => {
       <div className="p-4 pb-0">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-xl"><ArrowLeft className="w-5 h-5" /></Button>
+              </TooltipTrigger>
+              <TooltipContent>Back</TooltipContent>
+            </Tooltip>
             <img src={munLogo} alt="MUN AI" className="h-10 object-contain" />
             <div>
               <h1 className="font-display text-lg font-bold text-foreground">{committee?.name}</h1>
@@ -295,13 +302,25 @@ const ChairPortal = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/hmun-rop")} className="rounded-xl" title="HMUN ROP"><BookOpen className="w-4 h-4" /></Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => navigate("/hmun-rop")} className="rounded-xl"><BookOpen className="w-4 h-4" /></Button>
+              </TooltipTrigger>
+              <TooltipContent>HMUN ROP</TooltipContent>
+            </Tooltip>
             <ConfirmDialog
-              trigger={<Button variant="ghost" size="icon" className="rounded-xl" title="End Session"><LogOut className="w-5 h-5" /></Button>}
-              title="End Session"
-              description="Are you sure you want to end your chair session?"
+              trigger={
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-xl"><LogOut className="w-5 h-5" /></Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Exit (session preserved)</TooltipContent>
+                </Tooltip>
+              }
+              title="Exit Session"
+              description="You'll return to the dashboard. Your chair session and committee remain intact."
               onConfirm={handleEndSession}
-              confirmLabel="End Session"
+              confirmLabel="Exit"
               variant="destructive"
             />
           </div>

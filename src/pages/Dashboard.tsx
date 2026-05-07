@@ -12,6 +12,7 @@ const Dashboard = () => {
   const [conferences, setConferences] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
   const [registrations, setRegistrations] = useState<any[]>([]);
+  const [standalones, setStandalones] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,14 +29,21 @@ const Dashboard = () => {
   }, []);
 
   const loadData = async (userId: string) => {
-    const [confRes, rolesRes, regRes] = await Promise.all([
+    const deviceId = localStorage.getItem("munai_standalone_chair");
+    const [confRes, rolesRes, regRes, standaloneRes] = await Promise.all([
       supabase.from("conferences").select("*").eq("secgen_user_id", userId).order("created_at", { ascending: false }),
       supabase.from("user_roles").select("*, conferences_public(name)").eq("user_id", userId),
       supabase.from("event_registrations").select("*, conferences_public(name, start_date, end_date, logo_url)").eq("user_id", userId),
+      supabase.from("standalone_committees" as any)
+        .select("*")
+        .or(`created_by_user_id.eq.${userId}${deviceId ? `,created_by_device_id.eq.${deviceId}` : ""}`)
+        .is("ended_at", null)
+        .order("created_at", { ascending: false }),
     ]);
     setConferences((confRes.data as any) || []);
     setRoles((rolesRes.data as any) || []);
     setRegistrations((regRes.data as any) || []);
+    setStandalones((standaloneRes.data as any) || []);
     setLoading(false);
   };
 
@@ -125,6 +133,30 @@ const Dashboard = () => {
           </div>
         )}
 
+        {/* My Standalone Committees */}
+        {standalones.length > 0 && (
+          <div className="glass-card rounded-2xl p-5">
+            <h2 className="font-display font-semibold text-foreground mb-3 flex items-center gap-2">
+              <Gavel className="w-4 h-4 text-accent" /> My Standalone Committees
+            </h2>
+            <div className="space-y-2">
+              {standalones.map((s: any) => (
+                <div
+                  key={s.id}
+                  className="flex items-center justify-between bg-muted/30 rounded-xl px-4 py-3 cursor-pointer hover-lift"
+                  onClick={() => navigate(`/standalone/${s.id}`)}
+                >
+                  <div>
+                    <p className="font-medium text-foreground text-sm">{s.name}</p>
+                    <p className="text-xs text-muted-foreground">{s.committee_type || "general"} · code {s.committee_code}</p>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* My Roles */}
         {roles.length > 0 && (
           <div className="glass-card rounded-2xl p-5">
@@ -162,7 +194,7 @@ const Dashboard = () => {
           </div>
         )}
 
-        {conferences.length === 0 && roles.length === 0 && registrations.length === 0 && (
+        {conferences.length === 0 && roles.length === 0 && registrations.length === 0 && standalones.length === 0 && (
           <div className="glass-card rounded-2xl p-8 text-center">
             <p className="text-muted-foreground">No conferences or events yet. Create one or join with a code!</p>
           </div>

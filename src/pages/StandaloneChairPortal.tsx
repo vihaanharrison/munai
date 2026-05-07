@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
   Loader2, Users, LogOut, User, Check, X, Plus, FileText,
-  Bell, BookOpen, AlertTriangle, Eye, MessageSquare, BarChart3, Mic, Shield, Info
+  Bell, BookOpen, AlertTriangle, Eye, MessageSquare, BarChart3, Mic, Shield, Info, ArrowLeft
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import munLogo from "@/assets/mun-ai-logo.png";
 import AIAssistant from "@/components/AIAssistant";
 import ChairPOIPanel from "@/components/chair/ChairPOIPanel";
@@ -126,7 +127,19 @@ const StandaloneChairPortal = () => {
       committee_id: id,
       display_name: trimmedName,
       active: true,
+      approved: true,
+      source: "standalone",
     } as any).select().single();
+
+    // Best-effort: claim ownership for the creator if logged in and not yet set
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      if (auth?.user && committee && !committee.created_by_user_id) {
+        await supabase.from("standalone_committees" as any)
+          .update({ created_by_user_id: auth.user.id } as any)
+          .eq("id", id).is("created_by_user_id", null);
+      }
+    } catch {}
 
     if (error) { toast.error(`Could not start chair session: ${error.message}`); return; }
     setSessionId((data as any).id);
@@ -265,6 +278,12 @@ const StandaloneChairPortal = () => {
       <div className="p-4 pb-0">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-xl"><ArrowLeft className="w-5 h-5" /></Button>
+              </TooltipTrigger>
+              <TooltipContent>Back</TooltipContent>
+            </Tooltip>
             <img src={munLogo} alt="MUN AI" className="h-10 object-contain" />
             <div>
               <h1 className="font-display text-lg font-bold text-foreground">{committee.name}</h1>
@@ -277,10 +296,27 @@ const StandaloneChairPortal = () => {
                 <AlertTriangle className="w-4 h-4 mr-1" /> {committee.crisis_mode_active ? "Crisis On" : "Crisis"}
               </Button>
             )}
-            <Button variant="ghost" size="icon" onClick={downloadArchive} className="rounded-xl" title="Download committee archive (.zip)"><Download className="w-4 h-4" /></Button>
-            <Button variant="ghost" size="icon" onClick={() => navigate("/hmun-rop")} className="rounded-xl" title="HMUN ROP"><BookOpen className="w-4 h-4" /></Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={downloadArchive} className="rounded-xl"><Download className="w-4 h-4" /></Button>
+              </TooltipTrigger>
+              <TooltipContent>Download archive (.zip)</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => navigate("/hmun-rop")} className="rounded-xl"><BookOpen className="w-4 h-4" /></Button>
+              </TooltipTrigger>
+              <TooltipContent>HMUN ROP</TooltipContent>
+            </Tooltip>
             <ConfirmDialog
-              trigger={<Button variant="ghost" size="icon" className="rounded-xl" title="Exit (you can re-enter anytime)"><LogOut className="w-5 h-5" /></Button>}
+              trigger={
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-xl"><LogOut className="w-5 h-5" /></Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Exit (committee preserved)</TooltipContent>
+                </Tooltip>
+              }
               title="Exit Session"
               description="You'll be returned to the homepage. The committee remains active and you can re-enter anytime with your code."
               onConfirm={handleEndSession}
