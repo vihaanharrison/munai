@@ -126,7 +126,19 @@ const StandaloneChairPortal = () => {
       committee_id: id,
       display_name: trimmedName,
       active: true,
+      approved: true,
+      source: "standalone",
     } as any).select().single();
+
+    // Best-effort: claim ownership for the creator if logged in and not yet set
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      if (auth?.user && committee && !committee.created_by_user_id) {
+        await supabase.from("standalone_committees" as any)
+          .update({ created_by_user_id: auth.user.id } as any)
+          .eq("id", id).is("created_by_user_id", null);
+      }
+    } catch {}
 
     if (error) { toast.error(`Could not start chair session: ${error.message}`); return; }
     setSessionId((data as any).id);
