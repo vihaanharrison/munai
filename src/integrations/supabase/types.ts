@@ -121,6 +121,7 @@ export type Database = {
           device_id: string
           display_name: string | null
           id: string
+          source: string
         }
         Insert: {
           active?: boolean | null
@@ -131,6 +132,7 @@ export type Database = {
           device_id: string
           display_name?: string | null
           id?: string
+          source?: string
         }
         Update: {
           active?: boolean | null
@@ -141,30 +143,9 @@ export type Database = {
           device_id?: string
           display_name?: string | null
           id?: string
+          source?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "chair_sessions_committee_id_fkey"
-            columns: ["committee_id"]
-            isOneToOne: false
-            referencedRelation: "committees"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "chair_sessions_conference_id_fkey"
-            columns: ["conference_id"]
-            isOneToOne: false
-            referencedRelation: "conferences"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "chair_sessions_conference_id_fkey"
-            columns: ["conference_id"]
-            isOneToOne: false
-            referencedRelation: "conferences_public"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       chat_messages: {
         Row: {
@@ -1316,6 +1297,7 @@ export type Database = {
           committee_type: string
           created_at: string | null
           created_by_device_id: string | null
+          created_by_user_id: string | null
           crisis_enabled: boolean | null
           crisis_extra_members: string | null
           crisis_mode_active: boolean | null
@@ -1333,6 +1315,7 @@ export type Database = {
           committee_type?: string
           created_at?: string | null
           created_by_device_id?: string | null
+          created_by_user_id?: string | null
           crisis_enabled?: boolean | null
           crisis_extra_members?: string | null
           crisis_mode_active?: boolean | null
@@ -1350,6 +1333,7 @@ export type Database = {
           committee_type?: string
           created_at?: string | null
           created_by_device_id?: string | null
+          created_by_user_id?: string | null
           crisis_enabled?: boolean | null
           crisis_extra_members?: string | null
           crisis_mode_active?: boolean | null
