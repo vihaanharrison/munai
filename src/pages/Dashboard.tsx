@@ -12,6 +12,7 @@ const Dashboard = () => {
   const [conferences, setConferences] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
   const [registrations, setRegistrations] = useState<any[]>([]);
+  const [standalones, setStandalones] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
