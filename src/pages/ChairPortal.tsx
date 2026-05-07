@@ -145,7 +145,7 @@ const ChairPortal = () => {
     const deviceId = getDeviceId();
     const { data, error } = await supabase.from("chair_sessions").insert({
       device_id: deviceId, conference_id: conferenceId, committee_id: committeeId,
-      display_name: trimmed, active: true, approved: false,
+      display_name: trimmed, active: true, approved: false, source: "conference",
     } as any).select().single();
 
     if (error) { toast.error(error.message); return; }
