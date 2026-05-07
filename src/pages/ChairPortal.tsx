@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
   Loader2, Users, LogOut, User, Check, X, Plus, FileText,
-  Bell, BookOpen, AlertTriangle, Eye, MessageSquare, BarChart3, Mic, Shield, Upload, Trash2
+  Bell, BookOpen, AlertTriangle, Eye, MessageSquare, BarChart3, Mic, Shield, Upload, Trash2, ArrowLeft
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import munLogo from "@/assets/mun-ai-logo.png";
 import LiveConferenceClock from "@/components/LiveConferenceClock";
 import AIAssistant from "@/components/AIAssistant";
