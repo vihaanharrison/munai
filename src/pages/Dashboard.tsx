@@ -133,6 +133,30 @@ const Dashboard = () => {
           </div>
         )}
 
+        {/* My Standalone Committees */}
+        {standalones.length > 0 && (
+          <div className="glass-card rounded-2xl p-5">
+            <h2 className="font-display font-semibold text-foreground mb-3 flex items-center gap-2">
+              <Gavel className="w-4 h-4 text-accent" /> My Standalone Committees
+            </h2>
+            <div className="space-y-2">
+              {standalones.map((s: any) => (
+                <div
+                  key={s.id}
+                  className="flex items-center justify-between bg-muted/30 rounded-xl px-4 py-3 cursor-pointer hover-lift"
+                  onClick={() => navigate(`/standalone/${s.id}`)}
+                >
+                  <div>
+                    <p className="font-medium text-foreground text-sm">{s.name}</p>
+                    <p className="text-xs text-muted-foreground">{s.committee_type || "general"} · code {s.committee_code}</p>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* My Roles */}
         {roles.length > 0 && (
           <div className="glass-card rounded-2xl p-5">
