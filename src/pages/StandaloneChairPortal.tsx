@@ -278,6 +278,12 @@ const StandaloneChairPortal = () => {
       <div className="p-4 pb-0">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-xl"><ArrowLeft className="w-5 h-5" /></Button>
+              </TooltipTrigger>
+              <TooltipContent>Back</TooltipContent>
+            </Tooltip>
             <img src={munLogo} alt="MUN AI" className="h-10 object-contain" />
             <div>
               <h1 className="font-display text-lg font-bold text-foreground">{committee.name}</h1>
