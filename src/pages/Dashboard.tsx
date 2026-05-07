@@ -194,7 +194,7 @@ const Dashboard = () => {
           </div>
         )}
 
-        {conferences.length === 0 && roles.length === 0 && registrations.length === 0 && (
+        {conferences.length === 0 && roles.length === 0 && registrations.length === 0 && standalones.length === 0 && (
           <div className="glass-card rounded-2xl p-8 text-center">
             <p className="text-muted-foreground">No conferences or events yet. Create one or join with a code!</p>
           </div>
