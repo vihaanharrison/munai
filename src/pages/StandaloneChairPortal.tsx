@@ -296,10 +296,27 @@ const StandaloneChairPortal = () => {
                 <AlertTriangle className="w-4 h-4 mr-1" /> {committee.crisis_mode_active ? "Crisis On" : "Crisis"}
               </Button>
             )}
-            <Button variant="ghost" size="icon" onClick={downloadArchive} className="rounded-xl" title="Download committee archive (.zip)"><Download className="w-4 h-4" /></Button>
-            <Button variant="ghost" size="icon" onClick={() => navigate("/hmun-rop")} className="rounded-xl" title="HMUN ROP"><BookOpen className="w-4 h-4" /></Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={downloadArchive} className="rounded-xl"><Download className="w-4 h-4" /></Button>
+              </TooltipTrigger>
+              <TooltipContent>Download archive (.zip)</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => navigate("/hmun-rop")} className="rounded-xl"><BookOpen className="w-4 h-4" /></Button>
+              </TooltipTrigger>
+              <TooltipContent>HMUN ROP</TooltipContent>
+            </Tooltip>
             <ConfirmDialog
-              trigger={<Button variant="ghost" size="icon" className="rounded-xl" title="Exit (you can re-enter anytime)"><LogOut className="w-5 h-5" /></Button>}
+              trigger={
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-xl"><LogOut className="w-5 h-5" /></Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Exit (committee preserved)</TooltipContent>
+                </Tooltip>
+              }
               title="Exit Session"
               description="You'll be returned to the homepage. The committee remains active and you can re-enter anytime with your code."
               onConfirm={handleEndSession}
