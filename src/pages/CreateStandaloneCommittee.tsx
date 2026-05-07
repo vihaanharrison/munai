@@ -32,6 +32,11 @@ const CreateStandaloneCommittee = () => {
     const chairCode = committeeCode + generateCode(2);
     const deviceId = localStorage.getItem("munai_chair_device") || crypto.randomUUID();
     localStorage.setItem("munai_chair_device", deviceId);
+    // Reuse the same device id for the standalone-chair portal so the creator auto-resumes
+    if (!localStorage.getItem("munai_standalone_chair")) {
+      localStorage.setItem("munai_standalone_chair", deviceId);
+    }
+    const { data: auth } = await supabase.auth.getUser();
 
     const { data, error } = await supabase.from("standalone_committees").insert({
       name: name.trim(),
@@ -40,8 +45,10 @@ const CreateStandaloneCommittee = () => {
       committee_code: committeeCode,
       chair_code: chairCode,
       created_by_device_id: deviceId,
+      created_by_user_id: auth?.user?.id ?? null,
       committee_type: committeeType,
       crisis_enabled: committeeType === "crisis",
+      crisis_mode_active: committeeType === "crisis",
     } as any).select().single();
 
     if (error) { toast.error(error.message); setLoading(false); return; }
