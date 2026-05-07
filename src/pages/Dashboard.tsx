@@ -29,14 +29,21 @@ const Dashboard = () => {
   }, []);
 
   const loadData = async (userId: string) => {
-    const [confRes, rolesRes, regRes] = await Promise.all([
+    const deviceId = localStorage.getItem("munai_standalone_chair");
+    const [confRes, rolesRes, regRes, standaloneRes] = await Promise.all([
       supabase.from("conferences").select("*").eq("secgen_user_id", userId).order("created_at", { ascending: false }),
       supabase.from("user_roles").select("*, conferences_public(name)").eq("user_id", userId),
       supabase.from("event_registrations").select("*, conferences_public(name, start_date, end_date, logo_url)").eq("user_id", userId),
+      supabase.from("standalone_committees" as any)
+        .select("*")
+        .or(`created_by_user_id.eq.${userId}${deviceId ? `,created_by_device_id.eq.${deviceId}` : ""}`)
+        .is("ended_at", null)
+        .order("created_at", { ascending: false }),
     ]);
     setConferences((confRes.data as any) || []);
     setRoles((rolesRes.data as any) || []);
     setRegistrations((regRes.data as any) || []);
+    setStandalones((standaloneRes.data as any) || []);
     setLoading(false);
   };
 
