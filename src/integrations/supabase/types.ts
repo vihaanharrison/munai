@@ -843,29 +843,7 @@ export type Database = {
           marks?: Json | null
           name?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "delegates_committee_id_fkey"
-            columns: ["committee_id"]
-            isOneToOne: false
-            referencedRelation: "committees"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "delegates_conference_id_fkey"
-            columns: ["conference_id"]
-            isOneToOne: false
-            referencedRelation: "conferences"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "delegates_conference_id_fkey"
-            columns: ["conference_id"]
-            isOneToOne: false
-            referencedRelation: "conferences_public"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       event_registrations: {
         Row: {
