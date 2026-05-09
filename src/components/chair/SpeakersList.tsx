@@ -3,9 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Play, SkipForward, Plus, Clock, Mic, Check, Trash2, Loader2 } from "lucide-react";
+import { Play, SkipForward, Plus, Mic, Trash2, Pause } from "lucide-react";
 import ScoreSpeechModal from "./ScoreSpeechModal";
 
 interface Props {
@@ -20,9 +19,9 @@ const SpeakersList = ({ committeeId, conferenceId, delegates, onDelegatesUpdated
   const [listType, setListType] = useState<string>("gsl");
   const [addDelegateId, setAddDelegateId] = useState("");
   const [duration, setDuration] = useState(120);
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [timerActive, setTimerActive] = useState(false);
-  const timerRef = useRef<number | null>(null);
+  const [now, setNow] = useState(Date.now());
+  const [paused, setPaused] = useState(false);
+  const [pausedRemaining, setPausedRemaining] = useState<number | null>(null);
 
   // Mod caucus
   const [modTopic, setModTopic] = useState("");
@@ -30,9 +29,9 @@ const SpeakersList = ({ committeeId, conferenceId, delegates, onDelegatesUpdated
 
   // GSL scoring
   const [showScorePrompt, setShowScorePrompt] = useState(false);
-  const [chairFeedback, setChairFeedback] = useState("");
   const [scoringEntry, setScoringEntry] = useState<any>(null);
-  const [scoreLoading, setScoreLoading] = useState(false);
+  const [latestSpeechText, setLatestSpeechText] = useState("");
+  const promptedRef = useRef<Set<string>>(new Set());
 
   const approvedDelegates = delegates.filter((d) => d.approved);
 
@@ -50,47 +49,59 @@ const SpeakersList = ({ committeeId, conferenceId, delegates, onDelegatesUpdated
 
   useEffect(() => {
     const channel = supabase
-      .channel("speakers-realtime")
+      .channel(`speakers-rt-${committeeId}-${listType}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "speakers_list", filter: `committee_id=eq.${committeeId}` }, () => loadEntries())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [committeeId, loadEntries]);
+  }, [committeeId, listType, loadEntries]);
 
-  // Load active mod caucus
+  // Active mod caucus
   useEffect(() => {
-    if (listType === "modcaucus") {
-      supabase.from("mod_caucus").select("*").eq("committee_id", committeeId).eq("active", true).maybeSingle().then(({ data }) => {
-        setActiveModCaucus(data);
-      });
-    }
+    if (listType !== "modcaucus") return;
+    supabase.from("mod_caucus").select("*").eq("committee_id", committeeId).eq("active", true).maybeSingle().then(({ data }: any) => {
+      setActiveModCaucus(data);
+    });
   }, [listType, committeeId]);
 
-  // Timer
+  // Single ticking clock — drives timer display from server-side started_at
   useEffect(() => {
-    if (timerActive && timeLeft > 0) {
-      timerRef.current = window.setInterval(() => {
-        setTimeLeft((t) => {
-          if (t <= 1) {
-            setTimerActive(false);
-            if (timerRef.current) clearInterval(timerRef.current);
-            // Prompt for GSL scoring
-            const speaking = entries.find((e) => e.status === "speaking");
-            if (speaking && listType === "gsl") {
-              openScoringModal(speaking);
-            }
-            return 0;
-          }
-          return t - 1;
-        });
-      }, 1000);
+    const t = setInterval(() => setNow(Date.now()), 500);
+    return () => clearInterval(t);
+  }, []);
+
+  const speaking = entries.find((e) => e.status === "speaking");
+  const upcoming = entries.filter((e) => e.status === "upcoming").sort((a, b) => a.position - b.position);
+  const done = entries.filter((e) => e.status === "done");
+
+  const totalDur = speaking?.duration_seconds || duration;
+  const elapsed = speaking?.started_at ? Math.floor((now - new Date(speaking.started_at).getTime()) / 1000) : 0;
+  const computedLeft = Math.max(0, totalDur - elapsed);
+  const timeLeft = paused && pausedRemaining != null ? pausedRemaining : computedLeft;
+
+  const getDName = (id: string) => approvedDelegates.find((d) => d.id === id)?.country || "Unknown";
+
+  const openScoringModal = useCallback(async (entry: any) => {
+    setScoringEntry(entry);
+    const { data: docs } = await supabase.from("delegate_documents").select("*")
+      .eq("delegate_id", entry.delegate_id).eq("doc_type", "gsl_speech")
+      .order("created_at", { ascending: false }).limit(1) as any;
+    setLatestSpeechText(docs?.[0]?.content || "");
+    setShowScorePrompt(true);
+  }, []);
+
+  // Auto-prompt scoring once when GSL timer hits 0
+  useEffect(() => {
+    if (!speaking || listType !== "gsl" || paused) return;
+    if (computedLeft === 0 && !promptedRef.current.has(speaking.id)) {
+      promptedRef.current.add(speaking.id);
+      openScoringModal(speaking);
     }
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [timerActive, timeLeft]);
+  }, [computedLeft, speaking, listType, paused, openScoringModal]);
 
   const addSpeaker = async () => {
-    if (!addDelegateId) return;
+    if (!addDelegateId) { toast.error("Select a delegate first"); return; }
     const maxPos = entries.length > 0 ? Math.max(...entries.map((e) => e.position)) + 1 : 0;
-    await supabase.from("speakers_list").insert({
+    const { error } = await supabase.from("speakers_list").insert({
       committee_id: committeeId,
       conference_id: conferenceId,
       list_type: listType,
@@ -99,26 +110,36 @@ const SpeakersList = ({ committeeId, conferenceId, delegates, onDelegatesUpdated
       duration_seconds: duration,
       status: "upcoming",
     } as any);
+    if (error) { toast.error(error.message); return; }
     setAddDelegateId("");
     loadEntries();
   };
 
   const startNextSpeaker = async () => {
-    // Mark current speaking as done
-    const speaking = entries.find((e) => e.status === "speaking");
+    setPaused(false); setPausedRemaining(null);
     if (speaking) {
       await supabase.from("speakers_list").update({ status: "done" } as any).eq("id", speaking.id);
     }
-    // Find next upcoming
-    const next = entries.filter((e) => e.status === "upcoming").sort((a, b) => a.position - b.position)[0];
+    const next = upcoming[0];
     if (next) {
       await supabase.from("speakers_list").update({ status: "speaking", started_at: new Date().toISOString() } as any).eq("id", next.id);
-      setTimeLeft(next.duration_seconds || duration);
-      setTimerActive(true);
     } else {
       toast.info("No more speakers in the list");
     }
     loadEntries();
+  };
+
+  const pauseResume = async () => {
+    if (!speaking) return;
+    if (!paused) {
+      setPausedRemaining(computedLeft);
+      setPaused(true);
+    } else {
+      const remaining = pausedRemaining ?? computedLeft;
+      const newStart = new Date(Date.now() - (totalDur - remaining) * 1000).toISOString();
+      await supabase.from("speakers_list").update({ started_at: newStart } as any).eq("id", speaking.id);
+      setPaused(false); setPausedRemaining(null);
+    }
   };
 
   const removeSpeaker = async (id: string) => {
@@ -128,7 +149,6 @@ const SpeakersList = ({ committeeId, conferenceId, delegates, onDelegatesUpdated
 
   const startModCaucus = async () => {
     if (!modTopic.trim()) { toast.error("Enter a topic"); return; }
-    // End any active mod caucus
     await supabase.from("mod_caucus").update({ active: false } as any).eq("committee_id", committeeId).eq("active", true);
     const { data } = await supabase.from("mod_caucus").insert({
       committee_id: committeeId,
@@ -152,25 +172,7 @@ const SpeakersList = ({ committeeId, conferenceId, delegates, onDelegatesUpdated
     }
   };
 
-  const [latestSpeechText, setLatestSpeechText] = useState("");
-  const openScoringModal = async (entry: any) => {
-    setScoringEntry(entry);
-    const { data: docs } = await supabase.from("delegate_documents").select("*")
-      .eq("delegate_id", entry.delegate_id).eq("doc_type", "gsl_speech")
-      .order("created_at", { ascending: false }).limit(1) as any;
-    setLatestSpeechText(docs?.[0]?.content || "");
-    setShowScorePrompt(true);
-  };
-
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
-
-  const speaking = entries.find((e) => e.status === "speaking");
-  const upcoming = entries.filter((e) => e.status === "upcoming").sort((a, b) => a.position - b.position);
-  const done = entries.filter((e) => e.status === "done");
-  const getDName = (id: string) => {
-    const d = approvedDelegates.find((d) => d.id === id);
-    return d ? `${d.country}` : "Unknown";
-  };
 
   return (
     <div className="space-y-4">
@@ -183,7 +185,6 @@ const SpeakersList = ({ committeeId, conferenceId, delegates, onDelegatesUpdated
         onSubmitted={onScoreSubmitted}
       />
 
-      {/* List Type Selector */}
       <div className="glass-card rounded-2xl p-5">
         <div className="flex gap-1 bg-secondary/50 rounded-xl p-1 mb-4">
           {["gsl", "modcaucus", "crisis"].map((t) => (
@@ -194,14 +195,13 @@ const SpeakersList = ({ committeeId, conferenceId, delegates, onDelegatesUpdated
           ))}
         </div>
 
-        {/* Mod Caucus Topic */}
         {listType === "modcaucus" && (
           <div className="mb-4">
-            {activeModCaucus ? (
+            {activeModCaucus && (
               <div className="bg-accent/10 rounded-xl px-4 py-2 mb-2">
                 <p className="text-xs text-accent font-medium">Active Topic: {activeModCaucus.topic}</p>
               </div>
-            ) : null}
+            )}
             <div className="flex gap-2">
               <Input value={modTopic} onChange={(e) => setModTopic(e.target.value)} placeholder="Caucus topic..." className="rounded-xl flex-1 text-sm" />
               <Button size="sm" onClick={startModCaucus} className="rounded-lg gradient-primary border-0 text-xs">Start</Button>
@@ -209,7 +209,6 @@ const SpeakersList = ({ committeeId, conferenceId, delegates, onDelegatesUpdated
           </div>
         )}
 
-        {/* Current Speaker */}
         {speaking && (
           <div className="bg-primary/10 rounded-2xl p-4 mb-4">
             <div className="flex items-center justify-between">
@@ -217,37 +216,30 @@ const SpeakersList = ({ committeeId, conferenceId, delegates, onDelegatesUpdated
                 <Mic className="w-5 h-5 text-primary animate-pulse" />
                 <div>
                   <p className="font-semibold text-foreground text-sm">{getDName(speaking.delegate_id)}</p>
-                  <p className="text-xs text-muted-foreground">Speaking now</p>
+                  <p className="text-xs text-muted-foreground">{paused ? "Paused" : "Speaking now"}</p>
                 </div>
               </div>
-              <div className="text-2xl font-mono font-bold text-primary">
+              <div className={`text-2xl font-mono font-bold ${timeLeft === 0 ? "text-destructive" : "text-primary"}`}>
                 {formatTime(timeLeft)}
               </div>
             </div>
           </div>
         )}
 
-        {/* Controls */}
         <div className="flex gap-2 mb-4">
           <Button onClick={startNextSpeaker} className="rounded-xl gradient-primary border-0 flex-1 text-sm">
             <SkipForward className="w-4 h-4 mr-2" /> {speaking ? "Next Speaker" : "Start"}
           </Button>
-          {timerActive && (
-            <Button variant="outline" onClick={() => setTimerActive(false)} className="rounded-xl text-sm">
-              Pause
-            </Button>
-          )}
-          {!timerActive && timeLeft > 0 && (
-            <Button variant="outline" onClick={() => setTimerActive(true)} className="rounded-xl text-sm">
-              <Play className="w-4 h-4 mr-1" /> Resume
+          {speaking && (
+            <Button variant="outline" onClick={pauseResume} className="rounded-xl text-sm">
+              {paused ? <><Play className="w-4 h-4 mr-1" /> Resume</> : <><Pause className="w-4 h-4 mr-1" /> Pause</>}
             </Button>
           )}
         </div>
 
-        {/* Add Speaker */}
         <div className="flex gap-2 mb-4">
           <Select value={addDelegateId} onValueChange={setAddDelegateId}>
-            <SelectTrigger className="rounded-xl flex-1 text-sm"><SelectValue placeholder="Add delegate..." /></SelectTrigger>
+            <SelectTrigger className="rounded-xl flex-1 text-sm"><SelectValue placeholder={approvedDelegates.length === 0 ? "No approved delegates" : "Add delegate..."} /></SelectTrigger>
             <SelectContent>
               {approvedDelegates.map((d) => (
                 <SelectItem key={d.id} value={d.id}>{d.country} — {d.name}</SelectItem>
@@ -255,10 +247,9 @@ const SpeakersList = ({ committeeId, conferenceId, delegates, onDelegatesUpdated
             </SelectContent>
           </Select>
           <Input type="number" value={duration} onChange={(e) => setDuration(parseInt(e.target.value) || 60)} className="w-20 rounded-xl text-sm" placeholder="sec" />
-          <Button onClick={addSpeaker} className="rounded-xl gradient-primary border-0"><Plus className="w-4 h-4" /></Button>
+          <Button onClick={addSpeaker} disabled={!addDelegateId} className="rounded-xl gradient-primary border-0"><Plus className="w-4 h-4" /></Button>
         </div>
 
-        {/* Upcoming */}
         {upcoming.length > 0 && (
           <div className="mb-3">
             <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Upcoming ({upcoming.length})</p>
@@ -277,7 +268,6 @@ const SpeakersList = ({ committeeId, conferenceId, delegates, onDelegatesUpdated
           </div>
         )}
 
-        {/* Done */}
         {done.length > 0 && (
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Completed ({done.length})</p>
