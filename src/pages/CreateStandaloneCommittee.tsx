@@ -40,6 +40,7 @@ const CreateStandaloneCommittee = () => {
     }
     const { data: auth } = await supabase.auth.getUser();
 
+    const presetData = committeeType === "specialized" && preset !== "none" ? PRESETS[preset] : null;
     const { data, error } = await supabase.from("standalone_committees").insert({
       name: name.trim(),
       topic: topic.trim() || null,
@@ -51,6 +52,7 @@ const CreateStandaloneCommittee = () => {
       committee_type: committeeType,
       crisis_enabled: committeeType === "crisis",
       crisis_mode_active: committeeType === "crisis",
+      ...(presetData ? { scoring_columns: presetData.scoring_columns, custom_tabs: presetData.custom_tabs } : {}),
     } as any).select().single();
 
     if (error) { toast.error(error.message); setLoading(false); return; }
