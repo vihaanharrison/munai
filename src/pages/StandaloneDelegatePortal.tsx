@@ -63,6 +63,12 @@ const StandaloneDelegatePortal = () => {
     const channel = supabase.channel("standalone-del-rt")
       .on("postgres_changes", { event: "*", schema: "public", table: "pois", filter: `committee_id=eq.${id}` }, () => loadPois())
       .on("postgres_changes", { event: "*", schema: "public", table: "speakers_list", filter: `committee_id=eq.${id}` }, () => loadSpeakers())
+      .on("postgres_changes", { event: "*", schema: "public", table: "delegates", filter: `committee_id=eq.${id}` }, () => {
+        loadCommitteeDelegates();
+        supabase.from("delegates").select("country").eq("committee_id", id).eq("active", true).then(({ data }: any) => {
+          setTakenDelegations((data || []).map((d: any) => d.country));
+        });
+      })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [id]);
