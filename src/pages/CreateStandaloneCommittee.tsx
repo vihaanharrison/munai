@@ -127,6 +127,14 @@ const CreateStandaloneCommittee = () => {
               {committeeType === "crisis" ? "Crisis tools, triggers & timeline enabled." : committeeType === "specialized" ? "Smaller committee with deeper scoring." : "Standard GA-style flow."}
             </p>
           </div>
+          {committeeType === "specialized" && (
+            <div>
+              <Label className="text-sm font-medium">Specialized Preset</Label>
+              <div className="mt-1.5">
+                <SpecializedTemplates value={preset} onChange={setPreset} />
+              </div>
+            </div>
+          )}
           <div>
             <Label className="text-sm font-medium">Topic (optional)</Label>
             <Input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g. Nuclear Disarmament" className="rounded-xl mt-1.5" />
