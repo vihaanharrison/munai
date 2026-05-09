@@ -470,6 +470,7 @@ const StandaloneChairPortal = () => {
       </div>
 
       <PlannedNotes ownerType="chair" ownerId={getDeviceId()} committeeId={id} />
+      {id && <LiveTimers committeeId={id} />}
     </div>
   );
 };
