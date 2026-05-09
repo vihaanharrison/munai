@@ -28,17 +28,17 @@ const ScoreSpeechModal = ({ open, onClose, scoringEntry, delegateName, speechTex
     if (!feedback.trim()) { toast.error("Add chair feedback first"); return; }
     setAiLoading(true);
     try {
-      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assist`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
-        body: JSON.stringify({ type: "gsl-score", content: speechText || "(no speech text submitted)", chairFeedback: feedback, delegateName }),
+      const { data, error } = await supabase.functions.invoke("score-speech", {
+        body: { speech_text: speechText || "(no speech text submitted)", country: delegateName, agenda: feedback },
       });
-      const result = await resp.json();
-      if (result.error) { toast.error(result.error); return; }
-      setAiResult({ score: result.score || 0, feedback: result.feedback || "" });
-      setFinalScore(result.score || 10);
-    } catch {
-      toast.error("AI scoring failed");
+      if (error) { toast.error(error.message || "AI scoring failed"); return; }
+      const aiScore10 = Math.max(0, Math.min(10, parseInt((data as any)?.score) || 0));
+      const aiFeedback = (data as any)?.ai_feedback || "";
+      const combined = Math.min(20, aiScore10 + Math.round(Math.min(10, feedback.length / 30)));
+      setAiResult({ score: combined, feedback: aiFeedback });
+      setFinalScore(combined);
+    } catch (e: any) {
+      toast.error(e?.message || "AI scoring failed");
     } finally { setAiLoading(false); }
   };
 

@@ -19,6 +19,7 @@ import SpeakersList from "@/components/chair/SpeakersList";
 import BlocsManager from "@/components/chair/BlocsManager";
 import CrisisPanel from "@/components/chair/CrisisPanel";
 import PlannedNotes from "@/components/PlannedNotes";
+import LiveTimers from "@/components/LiveTimers";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import CustomTabsManager from "@/components/chair/CustomTabsManager";
 import { Download } from "lucide-react";
@@ -469,6 +470,7 @@ const StandaloneChairPortal = () => {
       </div>
 
       <PlannedNotes ownerType="chair" ownerId={getDeviceId()} committeeId={id} />
+      {id && <LiveTimers committeeId={id} />}
     </div>
   );
 };

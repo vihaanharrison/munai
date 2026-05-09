@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ArrowLeft, Copy, Check } from "lucide-react";
 import munLogo from "@/assets/mun-ai-logo.png";
+import SpecializedTemplates, { PRESETS, type SpecializedPreset } from "@/components/chair/SpecializedTemplates";
 
 function generateCode(length: number) {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -22,6 +23,7 @@ const CreateStandaloneCommittee = () => {
   const [topic, setTopic] = useState("");
   const [delegations, setDelegations] = useState("");
   const [committeeType, setCommitteeType] = useState<"general" | "specialized" | "crisis">("general");
+  const [preset, setPreset] = useState<SpecializedPreset>("none");
   const [created, setCreated] = useState<{ committeeCode: string; chairCode: string; id: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -38,6 +40,7 @@ const CreateStandaloneCommittee = () => {
     }
     const { data: auth } = await supabase.auth.getUser();
 
+    const presetData = committeeType === "specialized" && preset !== "none" ? PRESETS[preset] : null;
     const { data, error } = await supabase.from("standalone_committees").insert({
       name: name.trim(),
       topic: topic.trim() || null,
@@ -49,6 +52,7 @@ const CreateStandaloneCommittee = () => {
       committee_type: committeeType,
       crisis_enabled: committeeType === "crisis",
       crisis_mode_active: committeeType === "crisis",
+      ...(presetData ? { scoring_columns: presetData.scoring_columns, custom_tabs: presetData.custom_tabs } : {}),
     } as any).select().single();
 
     if (error) { toast.error(error.message); setLoading(false); return; }
@@ -123,6 +127,14 @@ const CreateStandaloneCommittee = () => {
               {committeeType === "crisis" ? "Crisis tools, triggers & timeline enabled." : committeeType === "specialized" ? "Smaller committee with deeper scoring." : "Standard GA-style flow."}
             </p>
           </div>
+          {committeeType === "specialized" && (
+            <div>
+              <Label className="text-sm font-medium">Specialized Preset</Label>
+              <div className="mt-1.5">
+                <SpecializedTemplates value={preset} onChange={setPreset} />
+              </div>
+            </div>
+          )}
           <div>
             <Label className="text-sm font-medium">Topic (optional)</Label>
             <Input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g. Nuclear Disarmament" className="rounded-xl mt-1.5" />

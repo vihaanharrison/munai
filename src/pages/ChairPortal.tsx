@@ -20,6 +20,7 @@ import SpeakersList from "@/components/chair/SpeakersList";
 import BlocsManager from "@/components/chair/BlocsManager";
 import CrisisPanel from "@/components/chair/CrisisPanel";
 import PlannedNotes from "@/components/PlannedNotes";
+import LiveTimers from "@/components/LiveTimers";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import CustomTabsManager from "@/components/chair/CustomTabsManager";
 
@@ -606,6 +607,7 @@ const ChairPortal = () => {
       </div>
 
       <PlannedNotes ownerType="chair" ownerId={getDeviceId()} conferenceId={conferenceId} committeeId={committeeId} />
+      {committeeId && <LiveTimers committeeId={committeeId} />}
     </div>
   );
 };
