@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ArrowLeft, Copy, Check } from "lucide-react";
 import munLogo from "@/assets/mun-ai-logo.png";
+import SpecializedTemplates, { PRESETS, type SpecializedPreset } from "@/components/chair/SpecializedTemplates";
 
 function generateCode(length: number) {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
