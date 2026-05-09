@@ -23,6 +23,7 @@ const CreateStandaloneCommittee = () => {
   const [topic, setTopic] = useState("");
   const [delegations, setDelegations] = useState("");
   const [committeeType, setCommitteeType] = useState<"general" | "specialized" | "crisis">("general");
+  const [preset, setPreset] = useState<SpecializedPreset>("none");
   const [created, setCreated] = useState<{ committeeCode: string; chairCode: string; id: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
