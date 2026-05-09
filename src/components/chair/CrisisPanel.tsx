@@ -73,12 +73,13 @@ const CrisisPanel = ({ committeeId, conferenceId, committee }: Props) => {
     }
   };
 
-  if (!committee?.crisis_enabled) {
+  const crisisOn = !!committee?.crisis_enabled || !!committee?.crisis_mode_active || committee?.committee_type === "crisis";
+  if (!crisisOn) {
     return (
       <div className="glass-card rounded-2xl p-5 text-center">
         <AlertTriangle className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
         <p className="text-sm text-muted-foreground">Crisis mode is not enabled for this committee.</p>
-        <p className="text-xs text-muted-foreground mt-1">A secretariat member must enable it first.</p>
+        <p className="text-xs text-muted-foreground mt-1">Toggle the Crisis button in the header to enable.</p>
       </div>
     );
   }
