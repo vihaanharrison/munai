@@ -607,6 +607,7 @@ const ChairPortal = () => {
       </div>
 
       <PlannedNotes ownerType="chair" ownerId={getDeviceId()} conferenceId={conferenceId} committeeId={committeeId} />
+      {committeeId && <LiveTimers committeeId={committeeId} />}
     </div>
   );
 };
