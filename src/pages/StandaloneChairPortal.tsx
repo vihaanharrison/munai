@@ -113,31 +113,44 @@ const StandaloneChairPortal = () => {
     if (!id) { toast.error("Committee not loaded yet"); return; }
     if (!committee) { toast.error("Committee not found"); return; }
 
-    const { count } = await supabase
+    // Account-based chair access
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      toast.error("Sign in required to enter as a chair");
+      navigate(`/auth?redirect=standalone/${id}`);
+      return;
+    }
+    const userId = session.user.id;
+
+    // Count distinct active chair accounts (max 3 different munai accounts)
+    const { data: activeSessions } = await supabase
       .from("chair_sessions")
-      .select("id", { count: "exact", head: true })
+      .select("user_id")
       .eq("committee_id", id)
       .eq("active", true) as any;
-    if ((count ?? 0) >= 3) { toast.error("Maximum 3 chairs per committee reached"); return; }
+    const distinct = new Set((activeSessions || []).map((s: any) => s.user_id).filter(Boolean));
+    const alreadyIn = distinct.has(userId);
+    if (!alreadyIn && distinct.size >= 3) {
+      toast.error("Maximum 3 chair accounts already registered for this committee");
+      return;
+    }
 
     const deviceId = getDeviceId();
-    // Standalone committees don't have a parent conference — reuse the committee id as conference_id sentinel
     const { data, error } = await supabase.from("chair_sessions").insert({
       device_id: deviceId,
       conference_id: id,
       committee_id: id,
       display_name: trimmedName,
+      user_id: userId,
       active: true,
       approved: true,
       source: "standalone",
     } as any).select().single();
 
-    // Best-effort: claim ownership for the creator if logged in and not yet set
     try {
-      const { data: auth } = await supabase.auth.getUser();
-      if (auth?.user && committee && !committee.created_by_user_id) {
+      if (committee && !committee.created_by_user_id) {
         await supabase.from("standalone_committees" as any)
-          .update({ created_by_user_id: auth.user.id } as any)
+          .update({ created_by_user_id: userId } as any)
           .eq("id", id).is("created_by_user_id", null);
       }
     } catch {}

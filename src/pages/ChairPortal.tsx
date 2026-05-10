@@ -141,13 +141,24 @@ const ChairPortal = () => {
     const { data: comm } = await supabase.from("committees").select("id").eq("id", committeeId).maybeSingle() as any;
     if (!comm) { toast.error("Committee not found — refresh and try again"); return; }
 
-    const { data: existing } = await supabase.from("chair_sessions").select("id").eq("committee_id", committeeId).eq("active", true) as any;
-    if (existing && existing.length >= 3) { toast.error("Maximum 3 chairs per committee reached"); return; }
+    // Account-based chair access
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      toast.error("Sign in required to enter as a chair");
+      navigate(`/auth?redirect=chair/${conferenceId}/${committeeId}`);
+      return;
+    }
+    const userId = session.user.id;
+
+    const { data: existing } = await supabase.from("chair_sessions").select("user_id").eq("committee_id", committeeId).eq("active", true) as any;
+    const distinct = new Set((existing || []).map((s: any) => s.user_id).filter(Boolean));
+    const alreadyIn = distinct.has(userId);
+    if (!alreadyIn && distinct.size >= 3) { toast.error("Maximum 3 chair accounts already registered for this committee"); return; }
 
     const deviceId = getDeviceId();
     const { data, error } = await supabase.from("chair_sessions").insert({
       device_id: deviceId, conference_id: conferenceId, committee_id: committeeId,
-      display_name: trimmed, active: true, approved: false, source: "conference",
+      display_name: trimmed, user_id: userId, active: true, approved: false, source: "conference",
     } as any).select().single();
 
     if (error) { toast.error(error.message); return; }
