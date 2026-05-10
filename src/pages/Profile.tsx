@@ -156,7 +156,7 @@ const Profile = () => {
             placeholder="Best Delegate at HMUN 2024 in DISEC, Honorable Mention at WIMUN 2023..."
             maxLength={5000}
           />
-          {(awards.length > 0 || true) && (
+          {(
             <div className="space-y-2">
               {awards.map((a, i) => (
                 <div key={i} className="bg-secondary/40 rounded-xl px-3 py-2 text-sm space-y-1.5">
