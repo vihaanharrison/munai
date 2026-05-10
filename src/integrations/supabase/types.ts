@@ -87,29 +87,7 @@ export type Database = {
           id?: string
           name?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "blocs_committee_id_fkey"
-            columns: ["committee_id"]
-            isOneToOne: false
-            referencedRelation: "committees"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "blocs_conference_id_fkey"
-            columns: ["conference_id"]
-            isOneToOne: false
-            referencedRelation: "conferences"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "blocs_conference_id_fkey"
-            columns: ["conference_id"]
-            isOneToOne: false
-            referencedRelation: "conferences_public"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       chair_sessions: {
         Row: {
@@ -122,6 +100,7 @@ export type Database = {
           display_name: string | null
           id: string
           source: string
+          user_id: string | null
         }
         Insert: {
           active?: boolean | null
@@ -133,6 +112,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           source?: string
+          user_id?: string | null
         }
         Update: {
           active?: boolean | null
@@ -144,6 +124,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           source?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -235,29 +216,7 @@ export type Database = {
           name?: string
           sort_order?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "committee_agendas_committee_id_fkey"
-            columns: ["committee_id"]
-            isOneToOne: false
-            referencedRelation: "committees"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "committee_agendas_conference_id_fkey"
-            columns: ["conference_id"]
-            isOneToOne: false
-            referencedRelation: "conferences"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "committee_agendas_conference_id_fkey"
-            columns: ["conference_id"]
-            isOneToOne: false
-            referencedRelation: "conferences_public"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       committee_files: {
         Row: {
@@ -287,29 +246,7 @@ export type Database = {
           id?: string
           uploaded_by?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "committee_files_committee_id_fkey"
-            columns: ["committee_id"]
-            isOneToOne: false
-            referencedRelation: "committees"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "committee_files_conference_id_fkey"
-            columns: ["conference_id"]
-            isOneToOne: false
-            referencedRelation: "conferences"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "committee_files_conference_id_fkey"
-            columns: ["conference_id"]
-            isOneToOne: false
-            referencedRelation: "conferences_public"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       committees: {
         Row: {
@@ -616,29 +553,7 @@ export type Database = {
           id?: string
           parent_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "crisis_triggers_committee_id_fkey"
-            columns: ["committee_id"]
-            isOneToOne: false
-            referencedRelation: "committees"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crisis_triggers_conference_id_fkey"
-            columns: ["conference_id"]
-            isOneToOne: false
-            referencedRelation: "conferences"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crisis_triggers_conference_id_fkey"
-            columns: ["conference_id"]
-            isOneToOne: false
-            referencedRelation: "conferences_public"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       custom_tab_entries: {
         Row: {
@@ -704,36 +619,7 @@ export type Database = {
           id?: string
           is_leader?: boolean | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "delegate_blocs_committee_id_fkey"
-            columns: ["committee_id"]
-            isOneToOne: false
-            referencedRelation: "committees"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "delegate_blocs_conference_id_fkey"
-            columns: ["conference_id"]
-            isOneToOne: false
-            referencedRelation: "conferences"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "delegate_blocs_conference_id_fkey"
-            columns: ["conference_id"]
-            isOneToOne: false
-            referencedRelation: "conferences_public"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "delegate_blocs_delegate_id_fkey"
-            columns: ["delegate_id"]
-            isOneToOne: false
-            referencedRelation: "delegates"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       delegate_documents: {
         Row: {
@@ -772,36 +658,7 @@ export type Database = {
           id?: string
           status?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "delegate_documents_committee_id_fkey"
-            columns: ["committee_id"]
-            isOneToOne: false
-            referencedRelation: "committees"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "delegate_documents_conference_id_fkey"
-            columns: ["conference_id"]
-            isOneToOne: false
-            referencedRelation: "conferences"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "delegate_documents_conference_id_fkey"
-            columns: ["conference_id"]
-            isOneToOne: false
-            referencedRelation: "conferences_public"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "delegate_documents_delegate_id_fkey"
-            columns: ["delegate_id"]
-            isOneToOne: false
-            referencedRelation: "delegates"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       delegates: {
         Row: {
@@ -915,29 +772,7 @@ export type Database = {
           id?: string
           topic?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "mod_caucus_committee_id_fkey"
-            columns: ["committee_id"]
-            isOneToOne: false
-            referencedRelation: "committees"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "mod_caucus_conference_id_fkey"
-            columns: ["conference_id"]
-            isOneToOne: false
-            referencedRelation: "conferences"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "mod_caucus_conference_id_fkey"
-            columns: ["conference_id"]
-            isOneToOne: false
-            referencedRelation: "conferences_public"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       planned_notes: {
         Row: {
@@ -1009,43 +844,7 @@ export type Database = {
           to_chair?: boolean | null
           to_delegate_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "pois_committee_id_fkey"
-            columns: ["committee_id"]
-            isOneToOne: false
-            referencedRelation: "committees"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pois_conference_id_fkey"
-            columns: ["conference_id"]
-            isOneToOne: false
-            referencedRelation: "conferences"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pois_conference_id_fkey"
-            columns: ["conference_id"]
-            isOneToOne: false
-            referencedRelation: "conferences_public"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pois_from_delegate_id_fkey"
-            columns: ["from_delegate_id"]
-            isOneToOne: false
-            referencedRelation: "delegates"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pois_to_delegate_id_fkey"
-            columns: ["to_delegate_id"]
-            isOneToOne: false
-            referencedRelation: "delegates"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -1237,36 +1036,7 @@ export type Database = {
           started_at?: string | null
           status?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "speakers_list_committee_id_fkey"
-            columns: ["committee_id"]
-            isOneToOne: false
-            referencedRelation: "committees"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "speakers_list_conference_id_fkey"
-            columns: ["conference_id"]
-            isOneToOne: false
-            referencedRelation: "conferences"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "speakers_list_conference_id_fkey"
-            columns: ["conference_id"]
-            isOneToOne: false
-            referencedRelation: "conferences_public"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "speakers_list_delegate_id_fkey"
-            columns: ["delegate_id"]
-            isOneToOne: false
-            referencedRelation: "delegates"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       standalone_committees: {
         Row: {

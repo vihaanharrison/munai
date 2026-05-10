@@ -134,9 +134,17 @@ const StandaloneDelegatePortal = () => {
   };
 
   const submitPOI = async () => {
-    if (!poiContent.trim() || !poiTarget || !delegate) { toast.error("Select delegate and write POI"); return; }
-    await supabase.from("pois").insert({ committee_id: id!, conference_id: id!, from_delegate_id: delegate.id, to_delegate_id: poiTarget, content: poiContent.trim(), status: "pending" } as any);
-    setPoiContent(""); setPoiTarget(""); loadPois(); toast.success("POI submitted");
+    if (!poiContent.trim() || !poiTarget || !delegate) { toast.error("Select recipient and write POI"); return; }
+    const isChair = poiTarget === "__chair__";
+    await supabase.from("pois").insert({
+      committee_id: id!, conference_id: id!,
+      from_delegate_id: delegate.id,
+      to_delegate_id: isChair ? delegate.id : poiTarget,
+      to_chair: isChair,
+      content: poiContent.trim(),
+      status: "pending",
+    } as any);
+    setPoiContent(""); setPoiTarget(""); loadPois(); toast.success(isChair ? "POI sent to chair" : "POI submitted (chair review pending)");
   };
 
   const joinBloc = async (blocId: string, blocName: string) => {
@@ -273,8 +281,11 @@ const StandaloneDelegatePortal = () => {
             <div className="glass-card rounded-2xl p-5 space-y-3">
               <h2 className="font-display font-semibold text-foreground text-sm flex items-center gap-2"><MessageSquare className="w-4 h-4 text-accent" /> Submit POI</h2>
               <Select value={poiTarget} onValueChange={setPoiTarget}>
-                <SelectTrigger className="rounded-xl"><SelectValue placeholder="To delegate..." /></SelectTrigger>
-                <SelectContent>{committeeDelegates.filter((d) => d.id !== delegate?.id).map((d) => <SelectItem key={d.id} value={d.id}>{d.country} — {d.name}</SelectItem>)}</SelectContent>
+                <SelectTrigger className="rounded-xl"><SelectValue placeholder="To recipient..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__chair__">📣 Chair (committee)</SelectItem>
+                  {committeeDelegates.filter((d) => d.id !== delegate?.id).map((d) => <SelectItem key={d.id} value={d.id}>{d.country} — {d.name}</SelectItem>)}
+                </SelectContent>
               </Select>
               <Textarea value={poiContent} onChange={(e) => setPoiContent(e.target.value)} placeholder="Your POI..." className="rounded-xl min-h-[60px]" />
               <Button onClick={submitPOI} className="w-full rounded-xl gradient-primary border-0 font-semibold">Submit POI</Button>

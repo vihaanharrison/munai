@@ -156,16 +156,22 @@ const Profile = () => {
             placeholder="Best Delegate at HMUN 2024 in DISEC, Honorable Mention at WIMUN 2023..."
             maxLength={5000}
           />
-          {awards.length > 0 && (
+          {(
             <div className="space-y-2">
               {awards.map((a, i) => (
-                <div key={i} className="bg-secondary/40 rounded-xl px-3 py-2 text-sm">
-                  <p className="font-medium text-foreground">{a.award}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {[a.committee, a.conference, a.year].filter(Boolean).join(" · ")}
-                  </p>
+                <div key={i} className="bg-secondary/40 rounded-xl px-3 py-2 text-sm space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <Input value={a.award} onChange={(e) => setAwards(prev => prev.map((x, idx) => idx === i ? { ...x, award: e.target.value } : x))} className="rounded-lg bg-background/60 h-8 text-sm flex-1" placeholder="Award" />
+                    <Button type="button" size="sm" variant="ghost" onClick={() => setAwards(prev => prev.filter((_, idx) => idx !== i))} className="rounded-lg h-8 px-2 text-destructive hover:text-destructive">Delete</Button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <Input value={a.committee || ""} onChange={(e) => setAwards(prev => prev.map((x, idx) => idx === i ? { ...x, committee: e.target.value } : x))} className="rounded-lg bg-background/60 h-8 text-xs" placeholder="Committee" />
+                    <Input value={a.conference || ""} onChange={(e) => setAwards(prev => prev.map((x, idx) => idx === i ? { ...x, conference: e.target.value } : x))} className="rounded-lg bg-background/60 h-8 text-xs" placeholder="Conference" />
+                    <Input value={a.year || ""} onChange={(e) => setAwards(prev => prev.map((x, idx) => idx === i ? { ...x, year: e.target.value } : x))} className="rounded-lg bg-background/60 h-8 text-xs" placeholder="Year" />
+                  </div>
                 </div>
               ))}
+              <Button type="button" size="sm" variant="ghost" onClick={() => setAwards(prev => [...prev, { award: "", committee: "", conference: "", year: "" }])} className="rounded-lg text-xs w-full">+ Add award manually</Button>
             </div>
           )}
         </div>

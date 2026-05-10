@@ -21,6 +21,7 @@ import HmunRop from "./pages/HmunRop";
 import About from "./pages/About";
 import StandaloneChairPortal from "./pages/StandaloneChairPortal";
 import StandaloneDelegatePortal from "./pages/StandaloneDelegatePortal";
+import FindChairs from "./pages/FindChairs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ const App = () => (
           <Route path="/standalone-delegate/:id" element={<StandaloneDelegatePortal />} />
           <Route path="/hmun-rop" element={<HmunRop />} />
           <Route path="/about" element={<About />} />
+          <Route path="/find-chairs" element={<FindChairs />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
