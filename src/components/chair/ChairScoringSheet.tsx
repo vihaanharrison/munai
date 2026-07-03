@@ -73,7 +73,7 @@ const ChairScoringSheet = ({ committeeId, conferenceId, delegates, committee, on
   const saveColumns = async () => {
     const cols = newColumnsText.split(",").map((c) => c.trim()).filter(Boolean);
     if (cols.length === 0) { toast.error("Enter at least one column"); return; }
-    if (cols.length > 7) { toast.error("Maximum 7 columns"); return; }
+    if (cols.length > 12) { toast.error("Maximum 12 columns"); return; }
     await supabase.from("committees").update({ scoring_columns: cols } as any).eq("id", committeeId);
     setColumns(cols);
     setEditingColumns(false);
