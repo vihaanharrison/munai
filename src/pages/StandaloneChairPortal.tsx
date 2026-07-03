@@ -183,6 +183,7 @@ const StandaloneChairPortal = () => {
     if (error) { toast.error(`Could not start chair session: ${error.message}`); return; }
     setSessionId((data as any).id);
     setStep("dashboard");
+    await seedDelegationRoster(committee);
     await Promise.all([loadDelegates(), loadAgendas(), loadUpdates()]);
     toast.success("Logged in as Chair");
   };
