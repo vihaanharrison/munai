@@ -81,6 +81,7 @@ const StandaloneChairPortal = () => {
       setSessionId(existingSession.id);
       setDisplayName(existingSession.display_name || "");
       setStep("dashboard");
+      await seedDelegationRoster(sc);
       await Promise.all([loadDelegates(), loadAgendas(), loadUpdates()]);
     }
     setLoading(false);
