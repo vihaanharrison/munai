@@ -94,6 +94,30 @@ const StandaloneChairPortal = () => {
     setPendingCount(list.filter((d: any) => !d.approved && d.active).length);
   }, [id]);
 
+  // Seed pre-entered delegation matrix as auto-approved delegate rows so chairs
+  // can score them even if the delegate hasn't joined yet. Standalone only.
+  const seedDelegationRoster = useCallback(async (comm: any) => {
+    if (!id || !comm?.delegations) return;
+    const names: string[] = String(comm.delegations)
+      .split(/[,\n]/).map((s) => s.trim()).filter(Boolean);
+    if (!names.length) return;
+    const { data: existing } = await supabase.from("delegates")
+      .select("country").eq("committee_id", id) as any;
+    const have = new Set((existing || []).map((d: any) => (d.country || "").toLowerCase()));
+    const missing = names.filter((n) => !have.has(n.toLowerCase()));
+    if (!missing.length) return;
+    const rows = missing.map((n) => ({
+      conference_id: id,
+      committee_id: id,
+      name: n,
+      country: n,
+      approved: true,
+      active: true,
+      marks: {},
+    }));
+    await supabase.from("delegates").insert(rows as any);
+  }, [id]);
+
   const loadAgendas = async () => {
     if (!id) return;
     const { data } = await supabase.from("committee_agendas").select("*").eq("committee_id", id).order("sort_order") as any;
