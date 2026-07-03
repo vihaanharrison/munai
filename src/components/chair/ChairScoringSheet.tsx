@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Send, Settings } from "lucide-react";
+import { Loader2, Send, Settings, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 
 interface Props {
   committeeId: string;
