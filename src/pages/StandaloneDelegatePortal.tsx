@@ -107,15 +107,30 @@ const StandaloneDelegatePortal = () => {
   const handleRegister = async () => {
     if (!name.trim() || !country.trim()) { toast.error("Fill in all fields"); return; }
     const deviceId = getDeviceId();
-    const { data, error } = await supabase.from("delegates").insert({
-      conference_id: id!, committee_id: id!,
-      name: name.trim(), country: country.trim(),
-      device_id: deviceId, active: true, approved: false,
-    } as any).select().single();
-    if (error) { toast.error(error.message); return; }
-    setDelegate(data);
-    setStep("pending");
-    toast.success("Registration submitted!");
+    // Standalone: auto-approve. If a pre-seeded roster row exists for this
+    // country and hasn't been claimed by a device yet, claim it so scores persist.
+    const { data: seeded } = await supabase.from("delegates")
+      .select("*").eq("committee_id", id!).ilike("country", country.trim())
+      .is("device_id", null).eq("active", true).maybeSingle() as any;
+    let row: any;
+    if (seeded) {
+      const { data: upd } = await supabase.from("delegates")
+        .update({ device_id: deviceId, name: name.trim(), approved: true } as any)
+        .eq("id", seeded.id).select().single() as any;
+      row = upd;
+    } else {
+      const { data, error } = await supabase.from("delegates").insert({
+        conference_id: id!, committee_id: id!,
+        name: name.trim(), country: country.trim(),
+        device_id: deviceId, active: true, approved: true, marks: {},
+      } as any).select().single();
+      if (error) { toast.error(error.message); return; }
+      row = data;
+    }
+    setDelegate(row);
+    setStep("dashboard");
+    await loadDashboardData(row);
+    toast.success("Joined committee!");
   };
 
   const submitGSL = async () => {
