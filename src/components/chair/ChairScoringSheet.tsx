@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Send, Settings } from "lucide-react";
+import { Loader2, Send, Settings, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 
 interface Props {
   committeeId: string;
@@ -31,6 +32,19 @@ const ChairScoringSheet = ({ committeeId, conferenceId, delegates, committee, on
   }, [committee]);
 
   const approvedDelegates = delegates.filter((d) => d.approved);
+
+  const exportExcel = () => {
+    const header = ["Delegation", ...columns, "Total"];
+    const rows = approvedDelegates.map((d) => [
+      d.country,
+      ...columns.map((c) => getScore(d, c)),
+      getTotal(d),
+    ]);
+    const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Scores");
+    XLSX.writeFile(wb, `${(committee?.name || "committee").replace(/[^a-z0-9]/gi, "_")}_scores.xlsx`);
+  };
 
   const getScore = (delegate: any, col: string): number => {
     return (delegate.marks || {})[col] || 0;
@@ -59,7 +73,7 @@ const ChairScoringSheet = ({ committeeId, conferenceId, delegates, committee, on
   const saveColumns = async () => {
     const cols = newColumnsText.split(",").map((c) => c.trim()).filter(Boolean);
     if (cols.length === 0) { toast.error("Enter at least one column"); return; }
-    if (cols.length > 7) { toast.error("Maximum 7 columns"); return; }
+    if (cols.length > 12) { toast.error("Maximum 12 columns"); return; }
     await supabase.from("committees").update({ scoring_columns: cols } as any).eq("id", committeeId);
     setColumns(cols);
     setEditingColumns(false);
@@ -143,13 +157,18 @@ const ChairScoringSheet = ({ committeeId, conferenceId, delegates, committee, on
       <div className="glass-card rounded-2xl p-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-display font-semibold text-foreground text-sm">Scoring Spreadsheet</h2>
-          <Button variant="ghost" size="sm" onClick={() => { setEditingColumns(!editingColumns); setNewColumnsText(columns.join(", ")); }} className="rounded-lg text-xs h-7">
-            <Settings className="w-3 h-3 mr-1" /> Columns
-          </Button>
+          <div className="flex gap-1">
+            <Button variant="ghost" size="sm" onClick={exportExcel} className="rounded-lg text-xs h-7">
+              <Download className="w-3 h-3 mr-1" /> Excel
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => { setEditingColumns(!editingColumns); setNewColumnsText(columns.join(", ")); }} className="rounded-lg text-xs h-7">
+              <Settings className="w-3 h-3 mr-1" /> Columns
+            </Button>
+          </div>
         </div>
         {editingColumns && (
           <div className="bg-secondary/50 rounded-xl p-3 mb-3">
-            <p className="text-xs text-muted-foreground mb-1">Comma-separated column names (max 7):</p>
+            <p className="text-xs text-muted-foreground mb-1">Comma-separated column names (max 12):</p>
             <div className="flex gap-2">
               <Input value={newColumnsText} onChange={(e) => setNewColumnsText(e.target.value)} className="rounded-xl text-xs flex-1" />
               <Button size="sm" onClick={saveColumns} className="rounded-lg gradient-primary border-0 text-xs h-8">Save</Button>

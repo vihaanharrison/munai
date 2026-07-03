@@ -81,6 +81,7 @@ const StandaloneChairPortal = () => {
       setSessionId(existingSession.id);
       setDisplayName(existingSession.display_name || "");
       setStep("dashboard");
+      await seedDelegationRoster(sc);
       await Promise.all([loadDelegates(), loadAgendas(), loadUpdates()]);
     }
     setLoading(false);
@@ -92,6 +93,30 @@ const StandaloneChairPortal = () => {
     const list = data || [];
     setDelegates(list);
     setPendingCount(list.filter((d: any) => !d.approved && d.active).length);
+  }, [id]);
+
+  // Seed pre-entered delegation matrix as auto-approved delegate rows so chairs
+  // can score them even if the delegate hasn't joined yet. Standalone only.
+  const seedDelegationRoster = useCallback(async (comm: any) => {
+    if (!id || !comm?.delegations) return;
+    const names: string[] = String(comm.delegations)
+      .split(/[,\n]/).map((s) => s.trim()).filter(Boolean);
+    if (!names.length) return;
+    const { data: existing } = await supabase.from("delegates")
+      .select("country").eq("committee_id", id) as any;
+    const have = new Set((existing || []).map((d: any) => (d.country || "").toLowerCase()));
+    const missing = names.filter((n) => !have.has(n.toLowerCase()));
+    if (!missing.length) return;
+    const rows = missing.map((n) => ({
+      conference_id: id,
+      committee_id: id,
+      name: n,
+      country: n,
+      approved: true,
+      active: true,
+      marks: {},
+    }));
+    await supabase.from("delegates").insert(rows as any);
   }, [id]);
 
   const loadAgendas = async () => {
@@ -158,6 +183,7 @@ const StandaloneChairPortal = () => {
     if (error) { toast.error(`Could not start chair session: ${error.message}`); return; }
     setSessionId((data as any).id);
     setStep("dashboard");
+    await seedDelegationRoster(committee);
     await Promise.all([loadDelegates(), loadAgendas(), loadUpdates()]);
     toast.success("Logged in as Chair");
   };
