@@ -33,6 +33,19 @@ const ChairScoringSheet = ({ committeeId, conferenceId, delegates, committee, on
 
   const approvedDelegates = delegates.filter((d) => d.approved);
 
+  const exportExcel = () => {
+    const header = ["Delegation", ...columns, "Total"];
+    const rows = approvedDelegates.map((d) => [
+      d.country,
+      ...columns.map((c) => getScore(d, c)),
+      getTotal(d),
+    ]);
+    const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Scores");
+    XLSX.writeFile(wb, `${(committee?.name || "committee").replace(/[^a-z0-9]/gi, "_")}_scores.xlsx`);
+  };
+
   const getScore = (delegate: any, col: string): number => {
     return (delegate.marks || {})[col] || 0;
   };
